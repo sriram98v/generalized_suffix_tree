@@ -246,9 +246,13 @@ impl<T, U> KGST<T, U> where T: std::cmp::Eq + std::hash::Hash + Clone + std::mar
         }   
     }
 
-    // pub fn get_nodes(&self)->&HashMap<i32, Node>{
-    //     &self.nodes
-    // }
+    pub fn get_strings(&self)->&HashMap<U, Vec<T>>{
+        &self._strings
+    }
+
+    pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
+        self._strings = strings;
+    }
 
         
 }
