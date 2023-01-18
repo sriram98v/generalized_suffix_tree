@@ -21,7 +21,6 @@ pub struct KGST<T, U>{
     _strings: HashMap<U, Vec<T>>,
     _start_idx: i32,
     leaves: Vec<i32>,
-    depth: usize,
 }
 
 
@@ -45,7 +44,6 @@ impl<T, U> KGST<T, U> where T: std::cmp::Eq + std::hash::Hash + Clone + std::mar
             _strings: HashMap::new(),
             _start_idx: 0,
             leaves: Vec::new(),
-            depth: 0,
         }
     }
 
@@ -64,12 +62,11 @@ impl<T, U> KGST<T, U> where T: std::cmp::Eq + std::hash::Hash + Clone + std::mar
         self._strings= HashMap::new();
         self._start_idx= 0;
         self.leaves= Vec::new();
-        self.depth = 0;
     }
 
     // pub fn save_tree(&self)
 
-    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: usize){
+    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
         seq.push(self._terminal_character);
         self._strings.insert(seq_id.clone(), seq.clone());
         let string = seq.clone();
@@ -77,7 +74,6 @@ impl<T, U> KGST<T, U> where T: std::cmp::Eq + std::hash::Hash + Clone + std::mar
         let mut i = 0;
         self._start_idx = 0;
         self._terminal_er3 = false;
-        self.depth = 0;
         while i <= string_len {
             let leaf_end = i as i32;
             self._need_suffix_link = None;
@@ -98,7 +94,6 @@ impl<T, U> KGST<T, U> where T: std::cmp::Eq + std::hash::Hash + Clone + std::mar
                         new_node.add_parent(self._active_node);
                         self.nodes.insert(self.num_nodes, new_node);
                         self.num_nodes+=1;
-                        self.depth+=1;
                         self._string_leaves.push(self.num_nodes-1);
                         self._start_idx += 1;
                         self.nodes.get_mut(&self._active_node).unwrap().set_child(self._active_edge.unwrap(), self.num_nodes-1);
@@ -182,7 +177,6 @@ impl<T, U> KGST<T, U> where T: std::cmp::Eq + std::hash::Hash + Clone + std::mar
         let edge_length = self.nodes.get(&next_node_id).unwrap().edge_length(leaf_end);
         if self._active_length >= edge_length{
             self._active_length -= edge_length;
-            self.depth += edge_length as usize;
             self._active_edge_index += edge_length;
             self._active_edge = Some(string[self._active_edge_index as usize]);
             self._active_node = next_node_id;
