@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use std::option::Option;
+use serde::{Serialize, Deserialize};
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Node<T, U>{
     children: HashMap<T, i32>,
     suffix_link: Option<i32>,
@@ -14,7 +15,11 @@ pub struct Node<T, U>{
     start: i32,
 }
 
-impl<T, U> Node<T, U> where T: std::cmp::Eq + std::hash::Hash + Clone, U:std::cmp::Eq + std::hash::Hash + Clone{
+impl<'a, T, U> Node<T, U> 
+where
+    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>, 
+    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>
+{
     pub fn new(start:i32, end: Option<i32>)-> Node<T, U>{
         Node{
             children: HashMap::new(),
