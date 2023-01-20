@@ -35,6 +35,17 @@ fn serialize_tree(){
     println!("{}", serde_json::to_string(&tree).unwrap());
 }
 
+#[test]
+fn deserialize_tree(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "Hello".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.add_string(item_string.clone(), item_id);
+    let json_str:String = serde_json::to_string(&tree).unwrap();
+    let mut new_tree: KGST<char, String> = serde_json::from_str(&json_str).unwrap();
+    // assert_eq!(tree, new_tree);
+}
+
 
 // #[test]
 // fn add_string_trunc(){

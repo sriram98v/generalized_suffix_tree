@@ -3,8 +3,12 @@ use crate::suffix_node::Node;
 use std::collections::HashMap;
 use std::option::Option;
 
-#[derive(Debug, Serialize, Clone)]
-pub struct KGST<T, U>{
+#[derive(Debug, Serialize, Clone, Deserialize)]
+pub struct KGST<T, U>
+where
+    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
+    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
+{
     num_nodes: i32,
     nodes: HashMap<i32, Node<T, U>>,
     _root: i32,
@@ -25,8 +29,8 @@ pub struct KGST<T, U>{
 
 impl<'a, T, U> KGST<T, U> 
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone + std::marker::Copy + Serialize + Deserialize<'a>, 
-    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>
+    T: std::cmp::Eq + std::hash::Hash + Clone + std::marker::Copy + Serialize + serde::de::Deserialize<'a>, 
+    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize + serde::de::Deserialize<'a>
 {
     pub fn new(terminal_character: T)->KGST<T, U>{
         KGST{
