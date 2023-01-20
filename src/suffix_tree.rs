@@ -3,8 +3,6 @@ use crate::suffix_node::Node;
 use std::collections::HashMap;
 use std::option::Option;
 
-// pub mod suffix_node;
-
 #[derive(Debug, Serialize, Clone)]
 pub struct KGST<T, U>{
     num_nodes: i32,
