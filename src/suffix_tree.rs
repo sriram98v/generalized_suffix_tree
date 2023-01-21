@@ -253,7 +253,7 @@ where
         }   
     }
 
-    pub fn get_strings(&self)->&HashMap<U, Vec<T>>{
+    pub fn get_strings(&mut self)->&HashMap<U, Vec<T>>{
         &self._strings
     }
 
