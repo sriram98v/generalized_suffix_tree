@@ -6,8 +6,8 @@ use serde::{Serialize, Deserialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node<T, U>
 where
-T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
-U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
+    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
+    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
 {
     children: HashMap<T, i32>,
     suffix_link: Option<i32>,
