@@ -257,7 +257,7 @@ where
         &self._strings
     }
 
-    pub fn get_string(&mut self, string_id: &U)->&Vec<T>{
+    pub fn get_string(&self, string_id: &U)->&Vec<T>{
         &self._strings.get(string_id).unwrap()
     }
 
