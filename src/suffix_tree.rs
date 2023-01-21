@@ -257,8 +257,8 @@ where
         &self._strings
     }
 
-    pub fn get_string(&mut self, string_id: U)->&Vec<T>{
-        &self._strings.get(&string_id).unwrap()
+    pub fn get_string(&mut self, string_id: &U)->&Vec<T>{
+        &self._strings.get(string_id).unwrap()
     }
 
     pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
