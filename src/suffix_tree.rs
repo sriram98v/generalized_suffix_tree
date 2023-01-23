@@ -200,7 +200,7 @@ where
             Some(i) => {
                 self._leaves_of_node(i, &mut leaves);
                 let mut ids_and_indexes = Vec::new();
-                for leaf in &self.leaves{
+                for leaf in &leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
                         ids_and_indexes.push((id, idx));
                     }
