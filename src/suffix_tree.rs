@@ -192,13 +192,13 @@ where
         false
     }
 
-    pub fn find(&mut self, s:Vec<T>) -> Vec<(&U, &i32)>{
+    pub fn find(&self, s:Vec<T>) -> Vec<(&U, &i32)>{
         let node = self._find_node(s);
-        self.leaves.clear();
+        let mut leaves:Vec<i32> = Vec::new();
         match node{
             None => Vec::new(),
             Some(i) => {
-                self._leaves_of_node(i);
+                self._leaves_of_node(i, &mut leaves);
                 let mut ids_and_indexes = Vec::new();
                 for leaf in &self.leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
@@ -210,7 +210,7 @@ where
         }
     }
 
-    fn _find_node(&mut self, q_string:Vec<T>)->Option<i32>{
+    fn _find_node(&self, q_string:Vec<T>)->Option<i32>{
         let mut node: Option<i32> = Some(self._root);
         let mut c: T = q_string[0];
         let mut i = 0;
@@ -242,14 +242,14 @@ where
         // None
     }
 
-    fn _leaves_of_node(&mut self, node:i32){
+    fn _leaves_of_node(&self, node:i32, leaves:&mut Vec<i32>){
         if !self.nodes.get(&node).unwrap().has_children(){
-            self.leaves.push(node);
+            leaves.push(node);
         }
 
         for child in self.nodes.get(&node).unwrap().get_children().values(){
             // println!("{}", child);
-            self._leaves_of_node(*child);
+            self._leaves_of_node(*child, leaves);
         }   
     }
 
