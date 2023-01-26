@@ -71,8 +71,6 @@ where
         self.leaves= Vec::new();
     }
 
-    // pub fn save_tree(&self)
-
     pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
         seq.push(self._terminal_character);
         self._strings.insert(seq_id.clone(), seq.clone());
@@ -263,6 +261,10 @@ where
 
     pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
         self._strings = strings;
+    }
+
+    pub fn contains_key(&self, string_id:&U)->bool{
+        self._strings.contains_key(string_id)
     }
 
         
