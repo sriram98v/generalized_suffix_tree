@@ -4,27 +4,25 @@ use serde::{Serialize, Deserialize};
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Node<T, U>
+pub struct Node<T>
 where
     T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
-    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
 {
     children: HashMap<T, i32>,
     suffix_link: Option<i32>,
-    string_id: Option<U>,
-    string_ids: Vec<U>,
+    string_id: Option<usize>,
+    string_ids: Vec<usize>,
     start_idxs: Vec<i32>,
     parent: Option<i32>,
     end: Option<i32>,
     start: i32,
 }
 
-impl<'a, T, U> Node<T, U> 
+impl<'a, T> Node<T> 
 where
     T: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>, 
-    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>
 {
-    pub fn new(start:i32, end: Option<i32>)-> Node<T, U>{
+    pub fn new(start:i32, end: Option<i32>)-> Node<T>{
         Node{
             children: HashMap::new(),
             suffix_link: None,
@@ -45,7 +43,7 @@ where
     pub fn get_suffix_link(&self)->Option<i32>{
         self.suffix_link
     }
-    pub fn add_seq(&mut self, seq_id:U, start:i32){
+    pub fn add_seq(&mut self, seq_id:usize, start:i32){
         self.string_ids.push(seq_id);
         self.start_idxs.push(start)
     }
@@ -75,7 +73,7 @@ where
         self.get_end(default_end) + 1 - self.start
     }
 
-    pub fn get_string_id(&self)->Option<U>{
+    pub fn get_string_id(&self)->Option<usize>{
         self.string_id.clone()
     }
 
@@ -83,7 +81,7 @@ where
         self.start
     }
 
-    pub fn set_string_id(&mut self, string_id:U){
+    pub fn set_string_id(&mut self, string_id:usize){
         self.string_id = Some(string_id);
     }
 
@@ -102,7 +100,7 @@ where
         self.children.clone()
     }
 
-    pub fn get_data(&self)->Vec<(&U, &i32)>{
+    pub fn get_data(&self)->Vec<(&usize, &i32)>{
         let mut data = Vec::new();
         for (id, idx) in self.string_ids.iter().zip(self.start_idxs.iter()){
             data.push((id, idx));

@@ -10,7 +10,7 @@ where
     U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
 {
     num_nodes: i32,
-    nodes: HashMap<i32, Node<T, U>>,
+    nodes: HashMap<i32, Node<T>>,
     _root: i32,
     _active_node: i32,
     _active_edge: Option<T>,
@@ -21,7 +21,9 @@ where
     _string_leaves: Vec<i32>,
     _terminal_character: T,
     _terminal_er3: bool,
-    _strings: HashMap<U, Vec<T>>,
+    _strings: HashMap<usize, Vec<T>>,
+    _string_ids: HashMap<usize, U>,
+    _rev_string_ids: HashMap<U, usize>,
     _start_idx: i32,
     leaves: Vec<i32>,
 }
@@ -49,6 +51,8 @@ where
             _terminal_character: terminal_character,
             _terminal_er3: false,
             _strings: HashMap::new(),
+            _string_ids: HashMap::new(),
+            _rev_string_ids: HashMap::new(),
             _start_idx: 0,
             leaves: Vec::new(),
         }
@@ -73,7 +77,10 @@ where
 
     pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
         seq.push(self._terminal_character);
-        self._strings.insert(seq_id.clone(), seq.clone());
+        let string_ids_num: usize = self._strings.len() + 1;
+        self._strings.insert(string_ids_num, seq.clone());
+        self._string_ids.insert(string_ids_num, seq_id.clone());
+        self._rev_string_ids.insert(seq_id.clone(), string_ids_num);
         let string = seq.clone();
         let string_len = seq.len()-1;
         let mut i = 0;
@@ -94,8 +101,8 @@ where
                     None => {
                         // println!("{}", self._active_node);
                         let mut new_node = Node::new(i.try_into().unwrap(), None);
-                        new_node.add_seq(seq_id.clone(), i as i32);
-                        new_node.set_string_id(seq_id.clone());
+                        new_node.add_seq(string_ids_num, i as i32);
+                        new_node.set_string_id(string_ids_num);
                         new_node.add_parent(self._active_node);
                         self.nodes.insert(self.num_nodes, new_node);
                         self.num_nodes+=1;
@@ -112,7 +119,7 @@ where
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
                             if string[i] == self._terminal_character as T{
-                                self.nodes.get_mut(&node_id).unwrap().add_seq(seq_id.clone(), i as i32);
+                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, i as i32);
                                 self._start_idx += 1;
                                 if !self._terminal_er3{
                                     self._add_suffix_link(self._active_node);
@@ -126,7 +133,7 @@ where
                             }
                         }
                         else{
-                            let mut new_node:Node<T, U> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
+                            let mut new_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
                             new_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
                             new_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), i as i32);
                             new_node.add_parent(self._active_node);
@@ -134,8 +141,8 @@ where
                             self.num_nodes += 1;
                             self.nodes.get_mut(&self._active_node).unwrap().set_child(self._active_edge.unwrap(), self.num_nodes-1);
                             let mut new_node = Node::new(i as i32, None);
-                            new_node.set_string_id(seq_id.clone());
-                            new_node.add_seq(seq_id.clone(), i as i32);
+                            new_node.set_string_id(string_ids_num);
+                            new_node.add_seq(string_ids_num, i as i32);
                             self.nodes.insert(self.num_nodes, new_node);
                             self.num_nodes += 1;
                             self._string_leaves.push(self.num_nodes-1);
@@ -200,7 +207,7 @@ where
                 let mut ids_and_indexes = Vec::new();
                 for leaf in &leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
-                        ids_and_indexes.push((id, idx));
+                        ids_and_indexes.push((self._string_ids.get(id).unwrap(), idx));
                     }
                 }
                 ids_and_indexes
@@ -251,21 +258,25 @@ where
         }   
     }
 
-    pub fn get_strings(&mut self)->&HashMap<U, Vec<T>>{
-        &self._strings
+    pub fn get_strings(&self)->HashMap<U, Vec<T>>{
+        let mut strings: HashMap<U, Vec<T>> = HashMap::new();
+        for (string_num_id, seq) in self._strings.iter(){
+            strings.insert((*self._string_ids.get(string_num_id).unwrap()).clone(), (*seq).clone());
+        }
+        strings
     }
 
-    pub fn get_string(&self, string_id: &U)->&Vec<T>{
-        &self._strings.get(string_id).unwrap()
-    }
+    // pub fn get_string(&self, string_id: &U)->&Vec<T>{
+    //     &self._strings.get(string_id).unwrap()
+    // }
 
-    pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
-        self._strings = strings;
-    }
+    // pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
+    //     self._strings = strings;
+    // }
 
-    pub fn contains_key(&self, string_id:&U)->bool{
-        self._strings.contains_key(string_id)
-    }
+    // pub fn contains_key(&self, string_id:&U)->bool{
+    //     self._strings.contains_key(string_id)
+    // }
 
         
 }
