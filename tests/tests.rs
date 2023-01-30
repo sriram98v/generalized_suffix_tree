@@ -42,7 +42,7 @@ fn deserialize_tree(){
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
     let json_str:String = serde_json::to_string(&tree).unwrap();
-    let mut new_tree: KGST<char, String> = serde_json::from_str(&json_str).unwrap();
+    let new_tree: KGST<char, String> = serde_json::from_str(&json_str).unwrap();
     // assert_eq!(tree, new_tree);
 }
 
