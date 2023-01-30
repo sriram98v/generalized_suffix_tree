@@ -26,6 +26,7 @@ where
     _rev_string_ids: HashMap<U, usize>,
     _start_idx: i32,
     leaves: Vec<i32>,
+    _main_strings: HashMap<U, Vec<T>>,
 }
 
 
@@ -55,6 +56,7 @@ where
             _rev_string_ids: HashMap::new(),
             _start_idx: 0,
             leaves: Vec::new(),
+            _main_strings: HashMap::new(),
         }
     }
 
@@ -266,13 +268,13 @@ where
         strings
     }
 
-    // pub fn get_string(&self, string_id: &U)->&Vec<T>{
-    //     &self._strings.get(string_id).unwrap()
-    // }
+    pub fn get_string(&self, string_id: &U)->&Vec<T>{
+        &self._main_strings.get(string_id).unwrap()
+    }
 
-    // pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
-    //     self._strings = strings;
-    // }
+    pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
+        self._main_strings = strings;
+    }
 
     // pub fn contains_key(&self, string_id:&U)->bool{
     //     self._strings.contains_key(string_id)
