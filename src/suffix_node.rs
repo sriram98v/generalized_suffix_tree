@@ -1,7 +1,19 @@
 use std::collections::HashMap;
 use std::option::Option;
 use serde::{Serialize, Deserialize};
+use std::collections::LinkedList;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Data{
+    string_id: usize,
+    start_idx: i32,
+}
+
+impl Data{
+    pub fn new(string_id: usize, start_idx: i32)->Data{
+        Data { string_id: string_id, start_idx: start_idx }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node<T>
@@ -11,8 +23,7 @@ where
     children: HashMap<T, i32>,
     suffix_link: Option<i32>,
     string_id: Option<usize>,
-    string_ids: Vec<usize>,
-    start_idxs: Vec<i32>,
+    data: LinkedList<Data>,
     parent: Option<i32>,
     end: Option<i32>,
     start: i32,
@@ -27,26 +38,29 @@ where
             children: HashMap::new(),
             suffix_link: None,
             parent:None,
-            string_ids: Vec::new(),
-            start_idxs: Vec::new(),
+            data: LinkedList::new(),
             string_id: None,
             end,
             start,
         }
     }
+
     pub fn add_parent(&mut self, parent: i32){
         self.parent = Some(parent);
     }
+
     pub fn set_suffix_link(&mut self, link_node:i32){
         self.suffix_link = Some(link_node);
     }
+
     pub fn get_suffix_link(&self)->Option<i32>{
         self.suffix_link
     }
+
     pub fn add_seq(&mut self, seq_id:usize, start:i32){
-        self.string_ids.push(seq_id);
-        self.start_idxs.push(start)
+        self.data.push_back(Data::new(seq_id, start));
     }
+
     pub fn get_child(&self, child:Option<T>)->Option<i32>{
         match child{
             None => None,
@@ -102,8 +116,8 @@ where
 
     pub fn get_data(&self)->Vec<(&usize, &i32)>{
         let mut data = Vec::new();
-        for (id, idx) in self.string_ids.iter().zip(self.start_idxs.iter()){
-            data.push((id, idx));
+        for item in self.data.iter(){
+            data.push((&item.string_id, &item.start_idx));
         }
         data
     }
