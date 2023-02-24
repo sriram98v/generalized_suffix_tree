@@ -3,6 +3,25 @@ use crate::suffix_node::Node;
 use std::collections::HashMap;
 use std::option::Option;
 
+pub struct tree_item<T, U>
+where
+    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
+    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
+{
+    string: Vec<T>,
+    string_id: U,
+}
+
+impl<'a, T, U> tree_item<T, U> 
+where
+    T: std::cmp::Eq + std::hash::Hash + Clone + std::marker::Copy + Serialize + serde::de::Deserialize<'a>, 
+    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize + serde::de::Deserialize<'a>
+{
+    pub fn new(string: Vec<T>, string_id: U)->tree_item<T, U>{
+        tree_item { string: string, string_id: string_id }
+    }
+}
+
 #[derive(Debug, Serialize, Clone, Deserialize)]
 pub struct KGST<T, U>
 where
