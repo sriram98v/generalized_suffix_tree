@@ -6,11 +6,11 @@ use std::collections::LinkedList;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Data{
     string_id: usize,
-    start_idx: i32,
+    start_idx: u32,
 }
 
 impl Data{
-    pub fn new(string_id: usize, start_idx: i32)->Data{
+    pub fn new(string_id: usize, start_idx: u32)->Data{
         Data { string_id: string_id, start_idx: start_idx }
     }
 }
@@ -57,7 +57,7 @@ where
         self.suffix_link
     }
 
-    pub fn add_seq(&mut self, seq_id:usize, start:i32){
+    pub fn add_seq(&mut self, seq_id:usize, start:u32){
         self.data.push_back(Data::new(seq_id, start));
     }
 
@@ -114,7 +114,7 @@ where
         self.children.clone()
     }
 
-    pub fn get_data(&self)->Vec<(&usize, &i32)>{
+    pub fn get_data(&self)->Vec<(&usize, &u32)>{
         let mut data = Vec::new();
         for item in self.data.iter(){
             data.push((&item.string_id, &item.start_idx));

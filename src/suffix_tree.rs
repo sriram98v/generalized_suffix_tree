@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 use crate::suffix_node::Node;
+use crate::tree_item::TreeItem;
 use std::collections::HashMap;
 use std::option::Option;
 
@@ -21,9 +22,7 @@ where
     _string_leaves: Vec<i32>,
     _terminal_character: T,
     _terminal_er3: bool,
-    _strings: HashMap<usize, Vec<T>>,
-    _string_ids: HashMap<usize, U>,
-    _rev_string_ids: HashMap<U, usize>,
+    _strings: HashMap<usize, TreeItem<T, U>>,
     _start_idx: i32,
     leaves: Vec<i32>,
     _main_strings: HashMap<U, Vec<T>>,
@@ -52,8 +51,6 @@ where
             _terminal_character: terminal_character,
             _terminal_er3: false,
             _strings: HashMap::new(),
-            _string_ids: HashMap::new(),
-            _rev_string_ids: HashMap::new(),
             _start_idx: 0,
             leaves: Vec::new(),
             _main_strings: HashMap::new(),
@@ -80,9 +77,7 @@ where
     pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
         seq.push(self._terminal_character);
         let string_ids_num: usize = self._strings.len() + 1;
-        self._strings.insert(string_ids_num, seq.clone());
-        self._string_ids.insert(string_ids_num, seq_id.clone());
-        self._rev_string_ids.insert(seq_id.clone(), string_ids_num);
+        self._strings.insert(string_ids_num, TreeItem::new(seq.clone(), seq_id.clone()));
         let string = seq.clone();
         let string_len = seq.len()-1;
         let mut i = 0;
@@ -103,7 +98,7 @@ where
                     None => {
                         // println!("{}", self._active_node);
                         let mut new_node = Node::new(i.try_into().unwrap(), None);
-                        new_node.add_seq(string_ids_num, i as i32);
+                        new_node.add_seq(string_ids_num, i as u32);
                         new_node.set_string_id(string_ids_num);
                         new_node.add_parent(self._active_node);
                         self.nodes.insert(self.num_nodes, new_node);
@@ -121,7 +116,7 @@ where
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
                             if string[i] == self._terminal_character as T{
-                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, i as i32);
+                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, i as u32);
                                 self._start_idx += 1;
                                 if !self._terminal_er3{
                                     self._add_suffix_link(self._active_node);
@@ -137,14 +132,14 @@ where
                         else{
                             let mut new_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
                             new_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
-                            new_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), i as i32);
+                            new_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), i as u32);
                             new_node.add_parent(self._active_node);
                             self.nodes.insert(self.num_nodes, new_node);
                             self.num_nodes += 1;
                             self.nodes.get_mut(&self._active_node).unwrap().set_child(self._active_edge.unwrap(), self.num_nodes-1);
                             let mut new_node = Node::new(i as i32, None);
                             new_node.set_string_id(string_ids_num);
-                            new_node.add_seq(string_ids_num, i as i32);
+                            new_node.add_seq(string_ids_num, i as u32);
                             self.nodes.insert(self.num_nodes, new_node);
                             self.num_nodes += 1;
                             self._string_leaves.push(self.num_nodes-1);
@@ -199,7 +194,7 @@ where
         false
     }
 
-    pub fn find(&self, s:Vec<T>) -> Vec<(&U, &i32)>{
+    pub fn find(&self, s:Vec<T>) -> Vec<(&U, &u32)>{
         let node = self._find_node(s);
         let mut leaves:Vec<i32> = Vec::new();
         match node{
