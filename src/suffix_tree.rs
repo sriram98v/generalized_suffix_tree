@@ -26,7 +26,6 @@ where
     _start_idx: isize,
     leaves: Vec<isize>,
     _main_strings: HashMap<U, Arc<[T]>>,
-    depth: isize,
 }
 
 
@@ -55,7 +54,6 @@ where
             _start_idx: 0,
             leaves: Vec::new(),
             _main_strings: HashMap::new(),
-            depth: 0,
         }
     }
 
@@ -74,10 +72,9 @@ where
         self._strings= HashMap::new();
         self._start_idx= 0;
         self.leaves= Vec::new();
-        self.depth=0;
     }
 
-    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: isize){
+    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
         seq.push(self._terminal_character);
         let string_ids_num: usize = self._strings.len() + 1;
         self._strings.insert(string_ids_num, TreeItem::new(seq.clone(), seq_id.clone()));
@@ -86,7 +83,6 @@ where
         let mut i = 0;
         self._start_idx = 0;
         self._terminal_er3 = false;
-        self.depth = 0;
         while i <= string_len {
             let leaf_end = i as isize;
             self._need_suffix_link = None;
@@ -96,12 +92,6 @@ where
                 if self._active_length == 0{
                     self._active_edge_index = i as isize;
                     self._active_edge = Some(string[i]);
-                }
-                if self._active_length>= max_depth{
-
-                }
-                else{
-
                 }
                 let next_node_id = self.nodes.get(&self._active_node).unwrap().get_child(self._active_edge);
                 match next_node_id{
@@ -119,8 +109,7 @@ where
                         self._add_suffix_link(self._active_node);
                     },
                     Some(node_id) => {
-
-                        if self._walk_down(node_id, &string, leaf_end){
+                        if self._walk_down(node_id, string, leaf_end){
                             continue;
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
@@ -262,14 +251,6 @@ where
         }   
     }
 
-    // pub fn get_strings(&self)->HashMap<U, Vec<T>>{
-    //     let mut strings: HashMap<U, Vec<T>> = HashMap::new();
-    //     for (string_num_id, seq) in self._strings.iter(){
-    //         strings.insert((*self._string_ids.get(string_num_id).unwrap()).clone(), (*seq).clone());
-    //     }
-    //     strings
-    // }
-
     pub fn get_string(&self, string_id: &U)->&Arc<[T]>{
         &self._main_strings.get(string_id).unwrap()
     }
@@ -281,10 +262,6 @@ where
     pub fn set_strings(&mut self, strings:HashMap<U, Arc<[T]>>){
         self._main_strings = strings;
 
-    }
-
-    pub fn contains_key(&self, string_id:&U)->bool{
-        self._main_strings.contains_key(string_id)
     }
 
     pub fn to_newick(&self){
