@@ -114,7 +114,7 @@ where
                         if self._walk_down(node_id, string.clone(), leaf_end){
                             continue;
                         }
-                        else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
+                        else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
                             if string[i] == self._terminal_character as T{
                                 self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, i as u32);
                                 self._start_idx += 1;
@@ -147,7 +147,7 @@ where
                             self.nodes.get_mut(&(self.num_nodes-2)).unwrap().set_child(string[i], self.num_nodes-1);
                             let tmp_start = self.nodes.get(&node_id).unwrap().get_start() + self._active_length;
                             self.nodes.get_mut(&node_id).unwrap().set_start(tmp_start);
-                            let tmp_char = self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap()[self.nodes.get(&node_id).unwrap().get_start() as usize];
+                            let tmp_char = self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[self.nodes.get(&node_id).unwrap().get_start() as usize];
                             self.nodes.get_mut(&(self.num_nodes-2)).unwrap().set_child(tmp_char, node_id);
                             self._add_suffix_link(self.num_nodes-2);
                         }
@@ -204,7 +204,7 @@ where
                 let mut ids_and_indexes = Vec::new();
                 for leaf in &leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
-                        ids_and_indexes.push((self._string_ids.get(id).unwrap(), idx));
+                        ids_and_indexes.push((self._strings.get(id).unwrap().get_id(), idx));
                     }
                 }
                 ids_and_indexes
@@ -228,7 +228,7 @@ where
                     c = q_string[i];
                     let mut j = 1;
                     while i < q_string.len() && j < self.nodes.get(&n).unwrap().edge_length(-1){
-                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
+                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
                             return None;
                         }
                         if i==q_string.len()-1{
@@ -255,13 +255,13 @@ where
         }   
     }
 
-    pub fn get_strings(&self)->HashMap<U, Vec<T>>{
-        let mut strings: HashMap<U, Vec<T>> = HashMap::new();
-        for (string_num_id, seq) in self._strings.iter(){
-            strings.insert((*self._string_ids.get(string_num_id).unwrap()).clone(), (*seq).clone());
-        }
-        strings
-    }
+    // pub fn get_strings(&self)->HashMap<U, Vec<T>>{
+    //     let mut strings: HashMap<U, Vec<T>> = HashMap::new();
+    //     for (string_num_id, seq) in self._strings.iter(){
+    //         strings.insert((*self._string_ids.get(string_num_id).unwrap()).clone(), (*seq).clone());
+    //     }
+    //     strings
+    // }
 
     pub fn get_string(&self, string_id: &U)->&Vec<T>{
         &self._main_strings.get(string_id).unwrap()
