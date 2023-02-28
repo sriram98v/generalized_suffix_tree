@@ -13,8 +13,7 @@ fn add_string_full(){
     let item_string:Vec<char> = "Hello".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
-    let sstring = tree.find(&item_string);
-    assert_eq!(sstring, vec![(&"World".to_string(), &(0 as usize))]);
+    assert_eq!(tree.find(item_string), vec![(&"World".to_string(), &(0 as u32))]);
 }
 
 #[test]
@@ -26,7 +25,7 @@ fn add_string_set(){
     for (string,id) in it{
         tree.add_string(string.clone(), id.clone());
     }
-    assert_eq!(tree.find(&"XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as usize))]);
+    assert_eq!(tree.find("XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as u32))]);
 }
 
 #[test]
@@ -68,3 +67,12 @@ fn exact_pattern_match(){
     let matches: HashSet<(&String, &usize)> = tree.find(&"AT".to_string().chars().collect()).into_iter().collect();
     assert_eq!(matches, HashSet::from([(&"World".to_string(), &(1 as usize)), (&"World".to_string(), &(8 as usize)), (&"World".to_string(), &(18 as usize)), (&"World".to_string(), &(25 as usize)), (&"World2".to_string(), &(3 as usize))]));
 }
+
+// #[test]
+// fn add_string_trunc(){
+//     let mut tree: KGST<char, String> = KGST::new('$');
+//     let item_string:Vec<char> = "Hello".chars().collect();
+//     let item_id:String = "World".to_string();
+//     tree.add_string(item_string.clone(), item_id, 3);
+//     assert_ne!(tree.find(item_string), vec![(&"World".to_string(), &(0 as u32))]);
+// }
