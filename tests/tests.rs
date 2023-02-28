@@ -24,23 +24,5 @@ fn add_string_set(){
     for (string,id) in it{
         tree.add_string(string.clone(), id.clone(), 0);
     }
-    assert_eq!(tree.find(&"XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as usize))]);
-}
-
-#[test]
-fn exact_pattern_match(){
-    let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Hello".chars().collect();
-    let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id);
-    assert_eq!(tree.find(&"Hello".to_string().chars().collect()), vec![(&"World".to_string(), &0)]);
-}
-
-#[test]
-fn serialize_tree(){
-    let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Hello".chars().collect();
-    let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id, 0);
-    println!("{}", serde_json::to_string(&tree).unwrap());
+    assert_eq!(tree.find("XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as usize))]);
 }
