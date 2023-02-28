@@ -13,8 +13,12 @@ fn add_string_full(){
     let item_string:Vec<char> = "Hello".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
+<<<<<<< HEAD
     let sstring = tree.find(&item_string);
     assert_eq!(sstring, vec![(&"World".to_string(), &(0 as u32))]);
+=======
+    assert_eq!(tree.find(item_string), vec![(&"World".to_string(), &(0 as u32))]);
+>>>>>>> 1f5d44f (switched from i32 to isize)
 }
 
 #[test]
@@ -26,7 +30,11 @@ fn add_string_set(){
     for (string,id) in it{
         tree.add_string(string.clone(), id.clone());
     }
+<<<<<<< HEAD
     assert_eq!(tree.find(&"XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as u32))]);
+=======
+    assert_eq!(tree.find("XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as u32))]);
+>>>>>>> 1f5d44f (switched from i32 to isize)
 }
 
 #[test]
