@@ -10,16 +10,16 @@ where
     T: std::cmp::Eq + std::hash::Hash + Clone,
     U: std::cmp::Eq + std::hash::Hash + Clone
 {
-    num_nodes: usize,
-    nodes: HashMap<usize, Node<T>>,
-    _root: usize,
-    _active_node: usize,
+    num_nodes: isize,
+    nodes: HashMap<isize, Node<T>>,
+    _root: isize,
+    _active_node: isize,
     _active_edge: Option<T>,
-    _active_edge_index: usize,
-    _active_length: usize,
-    _remainder: usize,
-    _need_suffix_link: Option<usize>,
-    _string_leaves: Vec<usize>,
+    _active_edge_index: isize,
+    _active_length: isize,
+    _remainder: isize,
+    _need_suffix_link: Option<isize>,
+    _string_leaves: Vec<isize>,
     _terminal_character: T,
     _terminal_er3: bool,
     _strings: HashMap<usize, TreeItem<T, U>>,
@@ -84,13 +84,13 @@ where
         self._start_idx = 0;
         self._terminal_er3 = false;
         while i <= string_len {
-            let leaf_end = i as usize;
+            let leaf_end = i as isize;
             self._need_suffix_link = None;
             self._remainder += 1;
             while self._remainder > 0{
 
                 if self._active_length == 0{
-                    self._active_edge_index = i as usize;
+                    self._active_edge_index = i as isize;
                     self._active_edge = Some(string[i]);
                 }
                 let next_node_id = self.nodes.get(&self._active_node).unwrap().get_child(self._active_edge);
@@ -175,13 +175,13 @@ where
         }
 
         for leaf in self._string_leaves.iter(){
-            self.nodes.get_mut(leaf).unwrap().set_end((string.len() - 1) as usize);
+            self.nodes.get_mut(leaf).unwrap().set_end((string.len() - 1) as isize);
         }     
         self._string_leaves.clear()
          
     }
 
-    fn _add_suffix_link(&mut self, node_id: usize){
+    fn _add_suffix_link(&mut self, node_id: isize){
         match self._need_suffix_link{
             None => (),
             Some(i) => self.nodes.get_mut(&i).unwrap().set_suffix_link(node_id),
@@ -189,7 +189,7 @@ where
         self._need_suffix_link = Some(node_id);
     }
 
-    fn _walk_down(&mut self, next_node_id:usize, string:Vec<T>, leaf_end:usize)->bool{
+    fn _walk_down(&mut self, next_node_id:isize, string:Vec<T>, leaf_end:isize)->bool{
         let edge_length = self.nodes.get(&next_node_id).unwrap().edge_length(leaf_end);
         if self._active_length >= edge_length{
             self._active_length -= edge_length;
@@ -203,7 +203,7 @@ where
 
     pub fn find(&self, s:&Vec<T>) -> Vec<(&U, &usize)>{
         let node = self._find_node(s);
-        let mut leaves:Vec<usize> = Vec::new();
+        let mut leaves:Vec<isize> = Vec::new();
         match node{
             None => Vec::new(),
             Some(i) => {
@@ -219,8 +219,8 @@ where
         }
     }
 
-    fn _find_node(&self, q_string:Vec<T>)->Option<usize>{
-        let mut node: Option<usize> = Some(self._root);
+    fn _find_node(&self, q_string:Vec<T>)->Option<isize>{
+        let mut node: Option<isize> = Some(self._root);
         let mut c: T = q_string[0];
         let mut i = 0;
         loop {
@@ -250,7 +250,7 @@ where
         }
     }
 
-    fn _leaves_of_node(&self, node:usize, leaves:&mut Vec<usize>){
+    fn _leaves_of_node(&self, node:isize, leaves:&mut Vec<isize>){
         if !self.nodes.get(&node).unwrap().has_children(){
             leaves.push(node);
         }
