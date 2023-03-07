@@ -20,20 +20,20 @@ pub struct Node<T>
 where
     T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
 {
-    children: HashMap<T, isize>,
-    suffix_link: Option<isize>,
+    children: HashMap<T, usize>,
+    suffix_link: Option<usize>,
     string_id: Option<usize>,
     data: LinkedList<Data>,
-    parent: Option<isize>,
-    end: Option<isize>,
-    start: isize,
+    parent: Option<usize>,
+    end: Option<usize>,
+    start: usize,
 }
 
 impl<'a, T> Node<T> 
 where
     T: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>, 
 {
-    pub fn new(start:isize, end: Option<isize>)-> Node<T>{
+    pub fn new(start:usize, end: Option<usize>)-> Node<T>{
         Node{
             children: HashMap::new(),
             suffix_link: None,
@@ -45,15 +45,15 @@ where
         }
     }
 
-    pub fn add_parent(&mut self, parent: isize){
+    pub fn add_parent(&mut self, parent: usize){
         self.parent = Some(parent);
     }
 
-    pub fn set_suffix_link(&mut self, link_node:isize){
+    pub fn set_suffix_link(&mut self, link_node:usize){
         self.suffix_link = Some(link_node);
     }
 
-    pub fn get_suffix_link(&self)->Option<isize>{
+    pub fn get_suffix_link(&self)->Option<usize>{
         self.suffix_link
     }
 
@@ -61,29 +61,29 @@ where
         self.data.push_back(Data::new(seq_id, start));
     }
 
-    pub fn get_child(&self, child:Option<T>)->Option<isize>{
+    pub fn get_child(&self, child:Option<T>)->Option<usize>{
         match child{
             None => None,
             Some(i) => self.children.get(&i).copied(),
             }
     }
     
-    pub fn set_child(&mut self, edge:T, child:isize){
+    pub fn set_child(&mut self, edge:T, child:usize){
         self.children.insert(edge, child);
     }
 
-    pub fn set_end(&mut self, end:isize){
+    pub fn set_end(&mut self, end:usize){
         self.end = Some(end);
     }
 
-    pub fn get_end(&self, default_end:isize)->isize{
+    pub fn get_end(&self, default_end:usize)->usize{
         match self.end{
             None => default_end,
             Some(x) => x,
         }
     }
 
-    pub fn edge_length(&self, default_end:isize)-> isize{
+    pub fn edge_length(&self, default_end:usize)-> usize{
         self.get_end(default_end) + 1 - self.start
     }
 
@@ -91,7 +91,7 @@ where
         self.string_id.clone()
     }
 
-    pub fn get_start(&self)->isize{
+    pub fn get_start(&self)->usize{
         self.start
     }
 
@@ -99,7 +99,7 @@ where
         self.string_id = Some(string_id);
     }
 
-    pub fn set_start(&mut self, new_start:isize){
+    pub fn set_start(&mut self, new_start:usize){
         self.start = new_start;
     }
 
@@ -110,7 +110,7 @@ where
         }
     }
 
-    pub fn get_children(&self)->HashMap<T, isize>{
+    pub fn get_children(&self)->HashMap<T, usize>{
         self.children.clone()
     }
 
