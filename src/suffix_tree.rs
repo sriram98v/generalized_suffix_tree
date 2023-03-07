@@ -236,7 +236,7 @@ where
                     c = q_string[i];
                     let mut j = 1;
                     while i < q_string.len() && j < self.nodes.get(&n).unwrap().edge_length(0){
-                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
+                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
                             return None;
                         }
                         if i==q_string.len()-1{
