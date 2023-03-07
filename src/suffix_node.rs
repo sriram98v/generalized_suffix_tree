@@ -6,11 +6,11 @@ use std::collections::LinkedList;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Data{
     string_id: usize,
-    start_idx: u32,
+    start_idx: usize,
 }
 
 impl Data{
-    pub fn new(string_id: usize, start_idx: u32)->Data{
+    pub fn new(string_id: usize, start_idx: usize)->Data{
         Data { string_id: string_id, start_idx: start_idx }
     }
 }
@@ -20,20 +20,20 @@ pub struct Node<T>
 where
     T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
 {
-    children: HashMap<T, i32>,
-    suffix_link: Option<i32>,
+    children: HashMap<T, usize>,
+    suffix_link: Option<usize>,
     string_id: Option<usize>,
     data: LinkedList<Data>,
-    parent: Option<i32>,
-    end: Option<i32>,
-    start: i32,
+    parent: Option<usize>,
+    end: Option<usize>,
+    start: usize,
 }
 
 impl<'a, T> Node<T> 
 where
     T: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>, 
 {
-    pub fn new(start:i32, end: Option<i32>)-> Node<T>{
+    pub fn new(start:usize, end: Option<usize>)-> Node<T>{
         Node{
             children: HashMap::new(),
             suffix_link: None,
@@ -45,45 +45,45 @@ where
         }
     }
 
-    pub fn add_parent(&mut self, parent: i32){
+    pub fn add_parent(&mut self, parent: usize){
         self.parent = Some(parent);
     }
 
-    pub fn set_suffix_link(&mut self, link_node:i32){
+    pub fn set_suffix_link(&mut self, link_node:usize){
         self.suffix_link = Some(link_node);
     }
 
-    pub fn get_suffix_link(&self)->Option<i32>{
+    pub fn get_suffix_link(&self)->Option<usize>{
         self.suffix_link
     }
 
-    pub fn add_seq(&mut self, seq_id:usize, start:u32){
+    pub fn add_seq(&mut self, seq_id:usize, start:usize){
         self.data.push_back(Data::new(seq_id, start));
     }
 
-    pub fn get_child(&self, child:Option<T>)->Option<i32>{
+    pub fn get_child(&self, child:Option<T>)->Option<usize>{
         match child{
             None => None,
             Some(i) => self.children.get(&i).copied(),
             }
     }
     
-    pub fn set_child(&mut self, edge:T, child:i32){
+    pub fn set_child(&mut self, edge:T, child:usize){
         self.children.insert(edge, child);
     }
 
-    pub fn set_end(&mut self, end:i32){
+    pub fn set_end(&mut self, end:usize){
         self.end = Some(end);
     }
 
-    pub fn get_end(&self, default_end:i32)->i32{
+    pub fn get_end(&self, default_end:usize)->usize{
         match self.end{
             None => default_end,
             Some(x) => x,
         }
     }
 
-    pub fn edge_length(&self, default_end:i32)-> i32{
+    pub fn edge_length(&self, default_end:usize)-> usize{
         self.get_end(default_end) + 1 - self.start
     }
 
@@ -91,7 +91,7 @@ where
         self.string_id.clone()
     }
 
-    pub fn get_start(&self)->i32{
+    pub fn get_start(&self)->usize{
         self.start
     }
 
@@ -99,7 +99,7 @@ where
         self.string_id = Some(string_id);
     }
 
-    pub fn set_start(&mut self, new_start:i32){
+    pub fn set_start(&mut self, new_start:usize){
         self.start = new_start;
     }
 
@@ -110,11 +110,11 @@ where
         }
     }
 
-    pub fn get_children(&self)->HashMap<T, i32>{
+    pub fn get_children(&self)->HashMap<T, usize>{
         self.children.clone()
     }
 
-    pub fn get_data(&self)->Vec<(&usize, &u32)>{
+    pub fn get_data(&self)->Vec<(&usize, &usize)>{
         let mut data = Vec::new();
         for item in self.data.iter(){
             data.push((&item.string_id, &item.start_idx));
