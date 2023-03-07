@@ -38,7 +38,7 @@ where
         KGST{
             num_nodes: 1,
             nodes: HashMap::from([
-                (0, Node::new(-1, Some(-1))),
+                (0, Node::new(0, Some(0))),
             ]),
             _root: 0,
             _active_node: 0,
@@ -59,7 +59,7 @@ where
 
     pub fn clear(&mut self){
         self.num_nodes= 1;
-        self.nodes= HashMap::from([(0, Node::new(-1, Some(-1))),]);
+        self.nodes= HashMap::from([(0, Node::new(0, Some(0))),]);
         self._root= 0;
         self._active_node= 0;
         self._active_edge= None;
@@ -232,8 +232,8 @@ where
                     i +=1;
                     c = q_string[i];
                     let mut j = 1;
-                    while i < q_string.len() && j < self.nodes.get(&n).unwrap().edge_length(-1){
-                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
+                    while i < q_string.len() && j < self.nodes.get(&n).unwrap().edge_length(0){
+                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
                             return None;
                         }
                         if i==q_string.len()-1{
