@@ -128,8 +128,6 @@ where
                         self._add_suffix_link(self._active_node);
                     },
                     Some(node_id) => {
-                        // println!("{:?}", node_id);
-                        // println!("{:?}", self.nodes);
                         if self._walk_down(node_id, string.clone(), leaf_end){
                             continue;
                         }
