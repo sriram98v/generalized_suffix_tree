@@ -78,7 +78,7 @@ where
         seq.push(self._terminal_character);
         let string_ids_num: usize = self._strings.len() + 1;
         self._strings.insert(string_ids_num, TreeItem::new(seq.clone(), seq_id.clone()));
-        let string = seq.clone();
+        let string = &seq;
         let string_len = seq.len()-1;
         let mut i = 0;
         self._start_idx = 0;
@@ -109,7 +109,7 @@ where
                         self._add_suffix_link(self._active_node);
                     },
                     Some(node_id) => {
-                        if self._walk_down(node_id, string.clone(), leaf_end){
+                        if self._walk_down(node_id, &string, leaf_end){
                             continue;
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
@@ -180,7 +180,7 @@ where
         self._need_suffix_link = Some(node_id);
     }
 
-    fn _walk_down(&mut self, next_node_id:isize, string:Vec<T>, leaf_end:isize)->bool{
+    fn _walk_down(&mut self, next_node_id:isize, string:&Vec<T>, leaf_end:isize)->bool{
         let edge_length = self.nodes.get(&next_node_id).unwrap().edge_length(leaf_end);
         if self._active_length >= edge_length{
             self._active_length -= edge_length;
