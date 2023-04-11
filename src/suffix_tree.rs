@@ -267,6 +267,7 @@ where
 
     pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
         self._main_strings = strings;
+
     }
 
     // pub fn contains_key(&self, string_id:&U)->bool{
