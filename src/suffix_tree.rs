@@ -265,6 +265,10 @@ where
         &self._main_strings.get(string_id).unwrap()
     }
 
+    pub fn get_strings(&self)->&HashMap<U, Vec<T>>{
+        &self._main_strings
+    }
+
     pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
         self._main_strings = strings;
 
@@ -273,6 +277,10 @@ where
     // pub fn contains_key(&self, string_id:&U)->bool{
     //     self._strings.contains_key(string_id)
     // }
+
+    pub fn to_newick(&self){
+        let mut newick_string: Vec<String> = Vec::new();
+    }
 
         
 }
