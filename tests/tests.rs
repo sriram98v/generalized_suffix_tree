@@ -11,8 +11,8 @@ fn add_string_full(){
     let item_string:Vec<char> = "Hello".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
-    let sstring = tree.find(&item_string);
-    assert_eq!(sstring, vec![(&"World".to_string(), &(0 as usize))]);
+    let sstring = tree.find(item_string);
+    assert_eq!(sstring, vec![(&"World".to_string(), &(0 as u32))]);
 }
 
 #[test]
