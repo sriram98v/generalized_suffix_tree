@@ -22,7 +22,7 @@ fn add_string_set(){
     let id_set:Vec<String> = vec!["first".to_string(),"second".to_string(),"third".to_string()];
     let it = string_set.iter().zip(id_set.iter());
     for (string,id) in it{
-        tree.add_string(string.clone(), id.clone());
+        tree.add_string(string.clone(), id.clone(), 0);
     }
     assert_eq!(tree.find(&"XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as usize))]);
 }
@@ -41,6 +41,6 @@ fn serialize_tree(){
     let mut tree: KGST<char, String> = KGST::new('$');
     let item_string:Vec<char> = "Hello".chars().collect();
     let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id);
+    tree.add_string(item_string.clone(), item_id, 0);
     println!("{}", serde_json::to_string(&tree).unwrap());
 }
