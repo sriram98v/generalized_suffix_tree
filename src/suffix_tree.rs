@@ -279,7 +279,7 @@ where
     // }
 
     pub fn to_newick(&self){
-        let mut newick_string: Vec<String> = Vec::new();
+        let _newick_string: Vec<String> = Vec::new();
     }
 
         
