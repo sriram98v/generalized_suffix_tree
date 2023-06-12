@@ -273,6 +273,10 @@ where
 
     }
 
+    pub fn contains_key(&self, string_id:&U)->bool{
+        self._main_strings.contains_key(string_id)
+    }
+
     pub fn to_newick(&self){
         let _newick_string: Vec<String> = Vec::new();
     }
