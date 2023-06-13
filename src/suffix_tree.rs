@@ -192,7 +192,7 @@ where
         false
     }
 
-    pub fn find(&self, s:Vec<T>) -> Vec<(&U, &u32)>{
+    pub fn find(&self, s:&Vec<T>) -> Vec<(&U, &u32)>{
         let node = self._find_node(s);
         let mut leaves:Vec<isize> = Vec::new();
         match node{
@@ -210,7 +210,7 @@ where
         }
     }
 
-    fn _find_node(&self, q_string:Vec<T>)->Option<isize>{
+    fn _find_node(&self, q_string:&Vec<T>)->Option<isize>{
         let mut node: Option<isize> = Some(self._root);
         let mut c: T = q_string[0];
         let mut i = 0;

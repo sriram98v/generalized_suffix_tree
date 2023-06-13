@@ -11,7 +11,7 @@ fn add_string_full(){
     let item_string:Vec<char> = "Hello".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
-    let sstring = tree.find(item_string);
+    let sstring = tree.find(&item_string);
     assert_eq!(sstring, vec![(&"World".to_string(), &(0 as u32))]);
 }
 
@@ -24,7 +24,7 @@ fn add_string_set(){
     for (string,id) in it{
         tree.add_string(string.clone(), id.clone());
     }
-    assert_eq!(tree.find("XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as u32))]);
+    assert_eq!(tree.find(&"XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as u32))]);
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn exact_pattern_match(){
     let item_string:Vec<char> = "Hello".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
-    assert_eq!(tree.find("Hello".to_string().chars().collect()), vec![(&"World".to_string(), &(0 as u32))]);
+    assert_eq!(tree.find(&"Hello".to_string().chars().collect()), vec![(&"World".to_string(), &(0 as u32))]);
 }
 
 
