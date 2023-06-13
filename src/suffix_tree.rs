@@ -88,7 +88,6 @@ where
             self._need_suffix_link = None;
             self._remainder += 1;
             while self._remainder > 0{
-                // println!("{}", self.depth);
                 if self._active_length == 0{
                     self._active_edge_index = i as isize;
                     self._active_edge = Some(string[i]);
@@ -96,7 +95,6 @@ where
                 let next_node_id = self.nodes.get(&self._active_node).unwrap().get_child(self._active_edge);
                 match next_node_id{
                     None => {
-                        // println!("{}", self._active_node);
                         let mut new_node = Node::new(i.try_into().unwrap(), None);
                         new_node.add_seq(string_ids_num, i as u32);
                         new_node.set_string_id(string_ids_num);
