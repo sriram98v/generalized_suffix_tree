@@ -219,7 +219,7 @@ where
         }
     }
 
-    fn _find_node(&self, q_string:Vec<T>)->Option<isize>{
+    fn _find_node(&self, q_string:&Vec<T>)->Option<isize>{
         let mut node: Option<isize> = Some(self._root);
         let mut c: T = q_string[0];
         let mut i = 0;
