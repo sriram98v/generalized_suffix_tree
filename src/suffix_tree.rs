@@ -209,7 +209,15 @@ where
         false
     }
 
+<<<<<<< HEAD
     pub fn find(&self, s:&Vec<T>) -> Vec<(&U, &u32)>{
+=======
+<<<<<<< HEAD
+    pub fn find(&self, s:Vec<T>) -> Vec<(&U, &usize)>{
+=======
+    pub fn find(&self, s:&Vec<T>) -> Vec<(&U, &u32)>{
+>>>>>>> a31b58d (changed input to find to use reference)
+>>>>>>> f10a76a (changed input to find to use reference)
         let node = self._find_node(s);
         let mut leaves:Vec<isize> = Vec::new();
         match node{
