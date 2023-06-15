@@ -26,7 +26,6 @@ where
     _start_idx: isize,
     leaves: Vec<isize>,
     _main_strings: HashMap<U, Vec<T>>,
-    depth: isize,
 }
 
 
@@ -39,7 +38,7 @@ where
         KGST{
             num_nodes: 1,
             nodes: HashMap::from([
-                (0, Node::new(0, Some(0))),
+                (0, Node::new(-1, Some(-1))),
             ]),
             _root: 0,
             _active_node: 0,
@@ -55,13 +54,12 @@ where
             _start_idx: 0,
             leaves: Vec::new(),
             _main_strings: HashMap::new(),
-            depth: 0,
         }
     }
 
     pub fn clear(&mut self){
         self.num_nodes= 1;
-        self.nodes= HashMap::from([(0, Node::new(0, Some(0))),]);
+        self.nodes= HashMap::from([(0, Node::new(-1, Some(-1))),]);
         self._root= 0;
         self._active_node= 0;
         self._active_edge= None;
@@ -74,10 +72,9 @@ where
         self._strings= HashMap::new();
         self._start_idx= 0;
         self.leaves= Vec::new();
-        self.depth=0;
     }
 
-    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: isize){
+    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
         seq.push(self._terminal_character);
         let string_ids_num: usize = self._strings.len() + 1;
         self._strings.insert(string_ids_num, TreeItem::new(seq.clone(), seq_id.clone()));
@@ -86,7 +83,6 @@ where
         let mut i = 0;
         self._start_idx = 0;
         self._terminal_er3 = false;
-        self.depth = 0;
         while i <= string_len {
             let leaf_end = i as isize;
             self._need_suffix_link = None;
@@ -96,12 +92,6 @@ where
                 if self._active_length == 0{
                     self._active_edge_index = i as isize;
                     self._active_edge = Some(string[i]);
-                }
-                if self._active_length>= max_depth{
-
-                }
-                else{
-
                 }
                 let next_node_id = self.nodes.get(&self._active_node).unwrap().get_child(self._active_edge);
                 match next_node_id{
@@ -242,8 +232,8 @@ where
                     i +=1;
                     c = q_string[i];
                     let mut j = 1;
-                    while i < q_string.len() && j < self.nodes.get(&n).unwrap().edge_length(0){
-                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
+                    while i < q_string.len() && j < self.nodes.get(&n).unwrap().edge_length(-1){
+                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
                             return None;
                         }
                         if i==q_string.len()-1{
