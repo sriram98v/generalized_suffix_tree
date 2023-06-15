@@ -213,6 +213,7 @@ where
             None => Vec::new(),
             Some(i) => {
                 self._leaves_of_node(i, &mut leaves);
+                println!("{:?}", leaves);
                 let mut ids_and_indexes = Vec::new();
                 for leaf in &leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
