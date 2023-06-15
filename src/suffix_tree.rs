@@ -88,6 +88,7 @@ where
             self._need_suffix_link = None;
             self._remainder += 1;
             while self._remainder > 0{
+
                 if self._active_length == 0{
                     self._active_edge_index = i as isize;
                     self._active_edge = Some(string[i]);
@@ -95,8 +96,9 @@ where
                 let next_node_id = self.nodes.get(&self._active_node).unwrap().get_child(self._active_edge);
                 match next_node_id{
                     None => {
+
                         let mut new_node = Node::new(i.try_into().unwrap(), None);
-                        new_node.add_seq(string_ids_num, i as usize);
+                        new_node.add_seq(string_ids_num, self._start_idx as u32);
                         new_node.set_string_id(string_ids_num);
                         // new_node.add_parent(self._active_node);
                         self.nodes.insert(self.num_nodes, new_node);
@@ -107,12 +109,14 @@ where
                         self._add_suffix_link(self._active_node);
                     },
                     Some(node_id) => {
-                        if self._walk_down(node_id, string, leaf_end){
+
+                        if self._walk_down(node_id, &string, leaf_end){
                             continue;
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
                             if string[i] == self._terminal_character as T{
-                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, i as usize);
+                                println!("{}", node_id);
+                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, self._start_idx as u32);
                                 self._start_idx += 1;
                                 if !self._terminal_er3{
                                     self._add_suffix_link(self._active_node);
@@ -126,17 +130,25 @@ where
                             }
                         }
                         else{
-                            let mut new_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
-                            new_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
-                            new_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), i as usize);
-                            new_node.add_parent(self._active_node);
-                            self.nodes.insert(self.num_nodes, new_node);
+
+                            let mut split_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
+                            split_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
+                            split_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), self._start_idx as u32);
+                            // split_node.add_parent(self._active_node);
+                            self.nodes.insert(self.num_nodes, split_node);
+
                             self.num_nodes += 1;
                             self.nodes.get_mut(&self._active_node).unwrap().set_child(self._active_edge.unwrap(), self.num_nodes-1);
-                            let mut new_node = Node::new(i as isize, None);
-                            new_node.set_string_id(string_ids_num);
-                            new_node.add_seq(string_ids_num, i as usize);
-                            self.nodes.insert(self.num_nodes, new_node);
+                            // self.nodes.get_mut(&(self.num_nodes-1)).unwrap().add_parent(self._active_node);
+
+                            let mut leaf_node = Node::new(i as isize, None);
+                            println!("{}", i);
+                            leaf_node.set_string_id(string_ids_num);
+                            leaf_node.add_seq(string_ids_num, self._start_idx as u32);
+                            // leaf_node.add_parent(self.num_nodes-1);
+                            self.nodes.insert(self.num_nodes, leaf_node);
+                            println!("{}, {}", self.num_nodes, self.nodes.get(&self.num_nodes).unwrap().get_start());
+
                             self.num_nodes += 1;
                             self._string_leaves.push(self.num_nodes-1);
                             self._start_idx += 1;
@@ -197,6 +209,7 @@ where
             None => Vec::new(),
             Some(i) => {
                 self._leaves_of_node(i, &mut leaves);
+                println!("{:?}", leaves);
                 let mut ids_and_indexes = Vec::new();
                 for leaf in &leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
@@ -249,7 +262,7 @@ where
         }   
     }
 
-    pub fn get_string(&self, string_id: &U)->&Arc<[T]>{
+    pub fn get_string(&self, string_id: &U)->&Vec<T>{
         &self._main_strings.get(string_id).unwrap()
     }
 
