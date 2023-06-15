@@ -1,8 +1,10 @@
+use std::collections::HashSet;
+
 use generalized_suffix_tree::suffix_tree::*;
 
 #[test]
 fn create_tree() {
-    let tree: KGST<char, String> = KGST::new('$');
+    let _tree: KGST<char, String> = KGST::new('$');
 }
 
 #[test]
@@ -43,25 +45,21 @@ fn deserialize_tree(){
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
     let json_str:String = serde_json::to_string(&tree).unwrap();
-    let new_tree: KGST<char, String> = serde_json::from_str(&json_str).unwrap();
+    let _new_tree: KGST<char, String> = serde_json::from_str(&json_str).unwrap();
     // assert_eq!(tree, new_tree);
 }
 
 #[test]
 fn exact_pattern_match(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Hello".chars().collect();
+    let item_string:Vec<char> = "BANANA".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
-    assert_eq!(tree.find(&"Hello".to_string().chars().collect()), vec![(&"World".to_string(), &(0 as u32))]);
+    println!("{}", serde_json::to_string(&tree).unwrap());
+    // let matches: HashSet<(&String, &u32)> = tree.find(&"XYZ".to_string().chars().collect()).into_iter().collect();
+    // assert_eq!(matches, HashSet::from([(&"World".to_string(), &(14 as u32))]));
+    let matches: HashSet<(&String, &u32)> = tree.find(&"ANA".to_string().chars().collect()).into_iter().collect();
+    assert_eq!(matches, HashSet::from([(&"World".to_string(), &(1 as u32)), (&"World".to_string(), &(3 as u32))]));
+    let matches: HashSet<(&String, &u32)> = tree.find(&"ABC".to_string().chars().collect()).into_iter().collect();
+    assert_eq!(matches, HashSet::new());
 }
-
-
-// #[test]
-// fn add_string_trunc(){
-//     let mut tree: KGST<char, String> = KGST::new('$');
-//     let item_string:Vec<char> = "Hello".chars().collect();
-//     let item_id:String = "World".to_string();
-//     tree.add_string(item_string.clone(), item_id, 3);
-//     assert_ne!(tree.find(item_string), vec![(&"World".to_string(), &(0 as u32))]);
-// }
