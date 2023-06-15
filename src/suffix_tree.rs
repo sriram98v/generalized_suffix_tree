@@ -115,7 +115,6 @@ where
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
                             if string[i] == self._terminal_character as T{
-                                println!("{}", node_id);
                                 self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, self._start_idx as u32);
                                 self._start_idx += 1;
                                 if !self._terminal_er3{
@@ -142,12 +141,10 @@ where
                             // self.nodes.get_mut(&(self.num_nodes-1)).unwrap().add_parent(self._active_node);
 
                             let mut leaf_node = Node::new(i as isize, None);
-                            println!("{}", i);
                             leaf_node.set_string_id(string_ids_num);
                             leaf_node.add_seq(string_ids_num, self._start_idx as u32);
                             // leaf_node.add_parent(self.num_nodes-1);
                             self.nodes.insert(self.num_nodes, leaf_node);
-                            println!("{}, {}", self.num_nodes, self.nodes.get(&self.num_nodes).unwrap().get_start());
 
                             self.num_nodes += 1;
                             self._string_leaves.push(self.num_nodes-1);
@@ -209,7 +206,6 @@ where
             None => Vec::new(),
             Some(i) => {
                 self._leaves_of_node(i, &mut leaves);
-                println!("{:?}", leaves);
                 let mut ids_and_indexes = Vec::new();
                 for leaf in &leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
