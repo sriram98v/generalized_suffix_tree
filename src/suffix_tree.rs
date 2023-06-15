@@ -98,7 +98,7 @@ where
                     None => {
 
                         let mut new_node = Node::new(i.try_into().unwrap(), None);
-                        new_node.add_seq(string_ids_num, self._start_idx as u32);
+                        new_node.add_seq(string_ids_num, self._start_idx as usize);
                         new_node.set_string_id(string_ids_num);
                         // new_node.add_parent(self._active_node);
                         self.nodes.insert(self.num_nodes, new_node);
@@ -115,8 +115,7 @@ where
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
                             if string[i] == self._terminal_character as T{
-                                println!("{}", node_id);
-                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, self._start_idx as u32);
+                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, self._start_idx as usize);
                                 self._start_idx += 1;
                                 if !self._terminal_er3{
                                     self._add_suffix_link(self._active_node);
@@ -133,7 +132,7 @@ where
 
                             let mut split_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
                             split_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
-                            split_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), self._start_idx as u32);
+                            split_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), self._start_idx as usize);
                             // split_node.add_parent(self._active_node);
                             self.nodes.insert(self.num_nodes, split_node);
 
@@ -144,7 +143,7 @@ where
                             let mut leaf_node = Node::new(i as isize, None);
                             println!("{}", i);
                             leaf_node.set_string_id(string_ids_num);
-                            leaf_node.add_seq(string_ids_num, self._start_idx as u32);
+                            leaf_node.add_seq(string_ids_num, self._start_idx as usize);
                             // leaf_node.add_parent(self.num_nodes-1);
                             self.nodes.insert(self.num_nodes, leaf_node);
                             println!("{}, {}", self.num_nodes, self.nodes.get(&self.num_nodes).unwrap().get_start());
@@ -262,8 +261,8 @@ where
         }   
     }
 
-    pub fn get_string(&self, string_id: &U)->&Vec<T>{
-        &self._main_strings.get(string_id).unwrap()
+    pub fn get_string(&self, string_id: &U)->&Arc<[T]>{
+        self._main_strings.get(string_id).unwrap()
     }
 
     pub fn get_strings(&self)->&HashMap<U, Arc<[T]>>{

@@ -52,14 +52,19 @@ fn deserialize_tree(){
 #[test]
 fn exact_pattern_match(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "BANANA".chars().collect();
+    let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
+    let item_string:Vec<char> = "BANATA".chars().collect();
+    let item_id:String = "World2".to_string();
+    tree.add_string(item_string.clone(), item_id);
     println!("{}", serde_json::to_string(&tree).unwrap());
-    // let matches: HashSet<(&String, &u32)> = tree.find(&"XYZ".to_string().chars().collect()).into_iter().collect();
-    // assert_eq!(matches, HashSet::from([(&"World".to_string(), &(14 as u32))]));
-    let matches: HashSet<(&String, &u32)> = tree.find(&"ANA".to_string().chars().collect()).into_iter().collect();
-    assert_eq!(matches, HashSet::from([(&"World".to_string(), &(1 as u32)), (&"World".to_string(), &(3 as u32))]));
-    let matches: HashSet<(&String, &u32)> = tree.find(&"ABC".to_string().chars().collect()).into_iter().collect();
-    assert_eq!(matches, HashSet::new());
+    let matches: HashSet<(&String, &usize)> = tree.find(&"XYZ".to_string().chars().collect()).into_iter().collect();
+    assert_eq!(matches, HashSet::from([(&"World".to_string(), &(14 as usize))]));
+    let matches: HashSet<(&String, &usize)> = tree.find(&"GATTA".to_string().chars().collect()).into_iter().collect();
+    assert_eq!(matches, HashSet::from([(&"World".to_string(), &(0 as usize)), (&"World".to_string(), &(7 as usize)), (&"World".to_string(), &(17 as usize)), (&"World".to_string(), &(24 as usize))]));
+    let matches: HashSet<(&String, &usize)> = tree.find(&"ANA".to_string().chars().collect()).into_iter().collect();
+    assert_eq!(matches, HashSet::from([(&"World2".to_string(), &(1 as usize))]));
+    let matches: HashSet<(&String, &usize)> = tree.find(&"AT".to_string().chars().collect()).into_iter().collect();
+    assert_eq!(matches, HashSet::from([(&"World".to_string(), &(1 as usize)), (&"World".to_string(), &(8 as usize)), (&"World".to_string(), &(18 as usize)), (&"World".to_string(), &(25 as usize)), (&"World2".to_string(), &(3 as usize))]));
 }
