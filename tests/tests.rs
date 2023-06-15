@@ -26,3 +26,12 @@ fn add_string_set(){
     }
     assert_eq!(tree.find("XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as usize))]);
 }
+
+#[test]
+fn exact_pattern_match(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "BANANA".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.add_string(item_string.clone(), item_id);
+    assert_eq!(tree.find(&"Hello".to_string().chars().collect()), vec![(&"World".to_string(), &(0 as u32))]);
+}
