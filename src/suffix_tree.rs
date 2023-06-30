@@ -1,14 +1,14 @@
-use serde::{Serialize, Deserialize};
 use crate::suffix_node::Node;
 use crate::tree_item::TreeItem;
 use std::collections::HashMap;
 use std::option::Option;
+use std::sync::Arc;
 
-#[derive(Debug, Serialize, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct KGST<T, U>
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
-    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
+    T: std::cmp::Eq + std::hash::Hash + Clone,
+    U: std::cmp::Eq + std::hash::Hash + Clone
 {
     num_nodes: isize,
     nodes: HashMap<isize, Node<T>>,
@@ -25,15 +25,15 @@ where
     _strings: HashMap<usize, TreeItem<T, U>>,
     _start_idx: isize,
     leaves: Vec<isize>,
-    _main_strings: HashMap<U, Vec<T>>,
+    _main_strings: HashMap<U, Arc<[T]>>,
     depth: isize,
 }
 
 
 impl<'a, T, U> KGST<T, U> 
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone + std::marker::Copy + Serialize + serde::de::Deserialize<'a>, 
-    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize + serde::de::Deserialize<'a>
+    T: std::cmp::Eq + std::hash::Hash + Clone + std::marker::Copy, 
+    U: std::cmp::Eq + std::hash::Hash + Clone 
 {
     pub fn new(terminal_character: T)->KGST<T, U>{
         KGST{
@@ -236,7 +236,7 @@ where
                     c = q_string[i];
                     let mut j = 1;
                     while i < q_string.len() && j < self.nodes.get(&n).unwrap().edge_length(0){
-                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
+                        if c != self._strings.get(&(*self.nodes.get(&n).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&n).unwrap().get_start() + j) as usize]{
                             return None;
                         }
                         if i==q_string.len()-1{
@@ -271,15 +271,15 @@ where
     //     strings
     // }
 
-    pub fn get_string(&self, string_id: &U)->&Vec<T>{
+    pub fn get_string(&self, string_id: &U)->&Arc<[T]>{
         &self._main_strings.get(string_id).unwrap()
     }
 
-    pub fn get_strings(&self)->&HashMap<U, Vec<T>>{
+    pub fn get_strings(&self)->&HashMap<U, Arc<[T]>>{
         &self._main_strings
     }
 
-    pub fn set_strings(&mut self, strings:HashMap<U, Vec<T>>){
+    pub fn set_strings(&mut self, strings:HashMap<U, Arc<[T]>>){
         self._main_strings = strings;
 
     }
