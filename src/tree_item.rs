@@ -1,10 +1,8 @@
-use serde::{Serialize, Deserialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct TreeItem<T, U>
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
-    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
+    T: std::cmp::Eq + std::hash::Hash + Clone,
+    U: std::cmp::Eq + std::hash::Hash + Clone,
 {
     string: Vec<T>,
     string_id: U,
@@ -12,8 +10,8 @@ where
 
 impl<'a, T, U> TreeItem<T, U> 
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>, 
-    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>, 
+    T: std::cmp::Eq + std::hash::Hash + Clone, 
+    U: std::cmp::Eq + std::hash::Hash + Clone, 
 {
     pub fn new(string: Vec<T>, string_id: U) -> TreeItem<T, U>{
         TreeItem{

@@ -15,10 +15,10 @@ impl Data{
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Node<T>
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
+    T: std::cmp::Eq + std::hash::Hash + Clone,
 {
     children: HashMap<T, isize>,
     suffix_link: Option<isize>,
@@ -31,7 +31,7 @@ where
 
 impl<'a, T> Node<T> 
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize + Deserialize<'a>, 
+    T: std::cmp::Eq + std::hash::Hash + Clone, 
 {
     pub fn new(start:isize, end: Option<isize>)-> Node<T>{
         Node{
