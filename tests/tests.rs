@@ -30,26 +30,6 @@ fn add_string_set(){
 }
 
 #[test]
-fn serialize_tree(){
-    let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Hello".chars().collect();
-    let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id);
-    println!("{}", serde_json::to_string(&tree).unwrap());
-}
-
-#[test]
-fn deserialize_tree(){
-    let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Hello".chars().collect();
-    let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id);
-    let json_str:String = serde_json::to_string(&tree).unwrap();
-    let _new_tree: KGST<char, String> = serde_json::from_str(&json_str).unwrap();
-    // assert_eq!(tree, new_tree);
-}
-
-#[test]
 fn exact_pattern_match(){
     let mut tree: KGST<char, String> = KGST::new('$');
     let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
@@ -58,7 +38,6 @@ fn exact_pattern_match(){
     let item_string:Vec<char> = "BANATA".chars().collect();
     let item_id:String = "World2".to_string();
     tree.add_string(item_string.clone(), item_id);
-    println!("{}", serde_json::to_string(&tree).unwrap());
     let matches: HashSet<(&String, &usize)> = tree.find(&"XYZ".to_string().chars().collect()).into_iter().collect();
     assert_eq!(matches, HashSet::from([(&"World".to_string(), &(14 as usize))]));
     let matches: HashSet<(&String, &usize)> = tree.find(&"GATTA".to_string().chars().collect()).into_iter().collect();

@@ -110,7 +110,7 @@ where
                     },
                     Some(node_id) => {
 
-                        if self._walk_down(node_id, &string, leaf_end){
+                        if self._walk_down(node_id, string, leaf_end){
                             continue;
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
@@ -189,7 +189,7 @@ where
         self._need_suffix_link = Some(node_id);
     }
 
-    fn _walk_down(&mut self, next_node_id:isize, string:Vec<T>, leaf_end:isize)->bool{
+    fn _walk_down(&mut self, next_node_id:isize, string:&Vec<T>, leaf_end:isize)->bool{
         let edge_length = self.nodes.get(&next_node_id).unwrap().edge_length(leaf_end);
         if self._active_length >= edge_length{
             self._active_length -= edge_length;
