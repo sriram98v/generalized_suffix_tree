@@ -189,7 +189,7 @@ where
         self._need_suffix_link = Some(node_id);
     }
 
-    fn _walk_down(&mut self, next_node_id:isize, string:Vec<T>, leaf_end:isize)->bool{
+    fn _walk_down(&mut self, next_node_id:isize, string:&Vec<T>, leaf_end:isize)->bool{
         let edge_length = self.nodes.get(&next_node_id).unwrap().edge_length(leaf_end);
         if self._active_length >= edge_length{
             self._active_length -= edge_length;
