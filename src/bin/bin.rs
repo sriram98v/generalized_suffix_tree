@@ -1,7 +1,7 @@
 extern crate clap;
 use clap::{arg, Command};
 use std::collections::{HashMap, HashSet};
-use bio::io::{fasta,  fastq};
+use bio::io::{fasta};
 use generalized_suffix_tree::suffix_tree::KGST;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::{fs};

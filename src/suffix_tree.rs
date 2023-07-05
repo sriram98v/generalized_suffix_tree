@@ -292,7 +292,6 @@ where
     where
         S: Serializer,
     {
-        // 3 is the number of fields in the struct.
         let mut state = serializer.serialize_struct("KGST", 7)?;
         state.serialize_field("num_nodes", &self.num_nodes)?;
         state.serialize_field("nodes", &self.nodes)?;
