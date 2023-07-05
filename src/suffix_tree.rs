@@ -3,6 +3,7 @@ use crate::tree_item::TreeItem;
 use std::collections::HashMap;
 use std::option::Option;
 use std::sync::Arc;
+use serde::ser::{Serialize, Serializer, SerializeStruct};
 
 #[derive(Debug, Clone)]
 pub struct KGST<T, U>
@@ -77,7 +78,7 @@ where
     pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
         seq.push(self._terminal_character);
         let string_ids_num: usize = self._strings.len() + 1;
-        self._strings.insert(string_ids_num, TreeItem::new(seq.clone(), seq_id.clone()));
+        self._strings.insert(string_ids_num, TreeItem::new(seq.clone().into(), seq_id.clone()));
         let string = &seq;
         let string_len = seq.len()-1;
         let mut i = 0;
@@ -133,18 +134,15 @@ where
                             let mut split_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
                             split_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
                             split_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), self._start_idx as usize);
-                            // split_node.add_parent(self._active_node);
                             self.nodes.insert(self.num_nodes, split_node);
 
                             self.num_nodes += 1;
                             self.nodes.get_mut(&self._active_node).unwrap().set_child(self._active_edge.unwrap(), self.num_nodes-1);
-                            // self.nodes.get_mut(&(self.num_nodes-1)).unwrap().add_parent(self._active_node);
 
                             let mut leaf_node = Node::new(i as isize, None);
                             println!("{}", i);
                             leaf_node.set_string_id(string_ids_num);
                             leaf_node.add_seq(string_ids_num, self._start_idx as usize);
-                            // leaf_node.add_parent(self.num_nodes-1);
                             self.nodes.insert(self.num_nodes, leaf_node);
                             println!("{}, {}", self.num_nodes, self.nodes.get(&self.num_nodes).unwrap().get_start());
 
@@ -283,4 +281,27 @@ where
     }
 
         
+}
+
+impl<'a, T, U> Serialize for KGST<T, U> 
+where
+    T: std::cmp::Eq + std::hash::Hash + Clone + std::marker::Copy + Serialize, 
+    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // 3 is the number of fields in the struct.
+        let mut state = serializer.serialize_struct("KGST", 7)?;
+        state.serialize_field("num_nodes", &self.num_nodes)?;
+        state.serialize_field("nodes", &self.nodes)?;
+        state.serialize_field("_terminal_character", &self._terminal_character)?;
+        state.serialize_field("_strings", &self._strings)?;
+        state.serialize_field("_start_idx", &self._start_idx)?;
+        state.serialize_field("leaves", &self.leaves)?;
+        let new_main_strings: HashMap<U, Vec<T>> = self._main_strings.clone().into_iter().map(|(key, value)| (key, value.to_vec())).collect();
+        state.serialize_field("_main_strings", &new_main_strings)?;
+        state.end()
+    }
 }

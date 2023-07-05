@@ -35,3 +35,12 @@ fn exact_pattern_match(){
     tree.add_string(item_string.clone(), item_id);
     assert_eq!(tree.find(&"Hello".to_string().chars().collect()), vec![(&"World".to_string(), &(0 as u32))]);
 }
+
+#[test]
+fn serialize_tree(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "Hello".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.add_string(item_string.clone(), item_id);
+    println!("{}", serde_json::to_string(&tree).unwrap());
+}
