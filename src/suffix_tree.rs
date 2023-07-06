@@ -3,6 +3,7 @@ use crate::tree_item::TreeItem;
 use std::collections::HashMap;
 use std::option::Option;
 use std::sync::Arc;
+use serde::ser::{Serialize, Serializer, SerializeStruct};
 
 #[derive(Debug, Clone)]
 pub struct KGST<T, U>
@@ -26,7 +27,6 @@ where
     _start_idx: isize,
     leaves: Vec<isize>,
     _main_strings: HashMap<U, Arc<[T]>>,
-    depth: isize,
 }
 
 
@@ -80,7 +80,7 @@ where
     pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: isize){
         seq.push(self._terminal_character);
         let string_ids_num: usize = self._strings.len() + 1;
-        self._strings.insert(string_ids_num, TreeItem::new(seq.clone(), seq_id.clone()));
+        self._strings.insert(string_ids_num, TreeItem::new(seq.clone().into(), seq_id.clone()));
         let string = &seq;
         let string_len = seq.len()-1;
         let mut i = 0;
@@ -92,7 +92,7 @@ where
             self._need_suffix_link = None;
             self._remainder += 1;
             while self._remainder > 0{
-                // println!("{}", self.depth);
+
                 if self._active_length == 0{
                     self._active_edge_index = i as isize;
                     self._active_edge = Some(string[i]);
@@ -106,11 +106,11 @@ where
                 let next_node_id = self.nodes.get(&self._active_node).unwrap().get_child(self._active_edge);
                 match next_node_id{
                     None => {
-                        // println!("{}", self._active_node);
+
                         let mut new_node = Node::new(i.try_into().unwrap(), None);
-                        new_node.add_seq(string_ids_num, i as usize);
+                        new_node.add_seq(string_ids_num, self._start_idx as usize);
                         new_node.set_string_id(string_ids_num);
-                        new_node.add_parent(self._active_node);
+                        // new_node.add_parent(self._active_node);
                         self.nodes.insert(self.num_nodes, new_node);
                         self.num_nodes+=1;
                         self._string_leaves.push(self.num_nodes-1);
@@ -119,12 +119,13 @@ where
                         self._add_suffix_link(self._active_node);
                     },
                     Some(node_id) => {
-                        if self._walk_down(node_id, &string, leaf_end){
+
+                        if self._walk_down(node_id, string, leaf_end){
                             continue;
                         }
                         else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
                             if string[i] == self._terminal_character as T{
-                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, i as usize);
+                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, self._start_idx as usize);
                                 self._start_idx += 1;
                                 if !self._terminal_er3{
                                     self._add_suffix_link(self._active_node);
@@ -138,17 +139,20 @@ where
                             }
                         }
                         else{
-                            let mut new_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
-                            new_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
-                            new_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), i as usize);
-                            new_node.add_parent(self._active_node);
-                            self.nodes.insert(self.num_nodes, new_node);
+
+                            let mut split_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
+                            split_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
+                            split_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), self._start_idx as usize);
+                            self.nodes.insert(self.num_nodes, split_node);
+
                             self.num_nodes += 1;
                             self.nodes.get_mut(&self._active_node).unwrap().set_child(self._active_edge.unwrap(), self.num_nodes-1);
-                            let mut new_node = Node::new(i as isize, None);
-                            new_node.set_string_id(string_ids_num);
-                            new_node.add_seq(string_ids_num, i as usize);
-                            self.nodes.insert(self.num_nodes, new_node);
+
+                            let mut leaf_node = Node::new(i as isize, None);
+                            leaf_node.set_string_id(string_ids_num);
+                            leaf_node.add_seq(string_ids_num, self._start_idx as usize);
+                            self.nodes.insert(self.num_nodes, leaf_node);
+
                             self.num_nodes += 1;
                             self._string_leaves.push(self.num_nodes-1);
                             self._start_idx += 1;
@@ -202,13 +206,14 @@ where
         false
     }
 
-    pub fn find(&self, s:Vec<T>) -> Vec<(&U, &usize)>{
+    pub fn find(&self, s:&Vec<T>) -> Vec<(&U, &usize)>{
         let node = self._find_node(s);
         let mut leaves:Vec<isize> = Vec::new();
         match node{
             None => Vec::new(),
             Some(i) => {
                 self._leaves_of_node(i, &mut leaves);
+                println!("{:?}", leaves);
                 let mut ids_and_indexes = Vec::new();
                 for leaf in &leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
@@ -220,7 +225,7 @@ where
         }
     }
 
-    fn _find_node(&self, q_string:Vec<T>)->Option<isize>{
+    fn _find_node(&self, q_string:&Vec<T>)->Option<isize>{
         let mut node: Option<isize> = Some(self._root);
         let mut c: T = q_string[0];
         let mut i = 0;
@@ -244,12 +249,11 @@ where
                         }
                         i += 1;
                         j += 1;
-                        c = q_string[i]
+                        c = q_string[i];
                     }
                 },
             }
         }
-        // None
     }
 
     fn _leaves_of_node(&self, node:isize, leaves:&mut Vec<isize>){
@@ -258,21 +262,12 @@ where
         }
 
         for child in self.nodes.get(&node).unwrap().get_children().values(){
-            // println!("{}", child);
             self._leaves_of_node(*child, leaves);
         }   
     }
 
-    // pub fn get_strings(&self)->HashMap<U, Vec<T>>{
-    //     let mut strings: HashMap<U, Vec<T>> = HashMap::new();
-    //     for (string_num_id, seq) in self._strings.iter(){
-    //         strings.insert((*self._string_ids.get(string_num_id).unwrap()).clone(), (*seq).clone());
-    //     }
-    //     strings
-    // }
-
     pub fn get_string(&self, string_id: &U)->&Arc<[T]>{
-        &self._main_strings.get(string_id).unwrap()
+        self._main_strings.get(string_id).unwrap()
     }
 
     pub fn get_strings(&self)->&HashMap<U, Arc<[T]>>{
@@ -284,13 +279,34 @@ where
 
     }
 
-    // pub fn contains_key(&self, string_id:&U)->bool{
-    //     self._strings.contains_key(string_id)
-    // }
+    pub fn contains_key(&self, string_id:&U)->bool{
+        self._main_strings.contains_key(string_id)
+    }
 
     pub fn to_newick(&self){
-        let mut newick_string: Vec<String> = Vec::new();
+        let _newick_string: Vec<String> = Vec::new();
     }
 
         
+}
+
+impl<'a, T, U> Serialize for KGST<T, U> 
+where
+    T: std::cmp::Eq + std::hash::Hash + Clone + std::marker::Copy + Serialize, 
+    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("KGST", 6)?;
+        state.serialize_field("num_nodes", &self.num_nodes)?;
+        state.serialize_field("nodes", &self.nodes)?;
+        state.serialize_field("_terminal_character", &self._terminal_character)?;
+        state.serialize_field("_strings", &self._strings)?;
+        state.serialize_field("_start_idx", &self._start_idx)?;
+        let new_main_strings: HashMap<U, Vec<T>> = self._main_strings.clone().into_iter().map(|(key, value)| (key, value.to_vec())).collect();
+        state.serialize_field("_main_strings", &new_main_strings)?;
+        state.end()
+    }
 }

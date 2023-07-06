@@ -15,7 +15,7 @@ impl Data{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Node<T>
 where
     T: std::cmp::Eq + std::hash::Hash + Clone,
