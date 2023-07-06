@@ -22,7 +22,7 @@ fn add_string_set(){
     let id_set:Vec<String> = vec!["first".to_string(),"second".to_string(),"third".to_string()];
     let it = string_set.iter().zip(id_set.iter());
     for (string,id) in it{
-        tree.add_string(string.clone(), id.clone(), 0);
+        tree.add_string(string.clone(), id.clone());
     }
     assert_eq!(tree.find(&"XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as usize))]);
 }
