@@ -15,22 +15,22 @@ fn add_string_full(){
     assert_eq!(sstring, vec![(&"World".to_string(), &(0 as usize))]);
 }
 
-// #[test]
-// fn add_string_set(){
-//     let mut tree: KGST<char, String> = KGST::new('$');
-//     let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "TTATAGCCGTACAGACCGAA".to_string().chars().collect(), "ATCTTAAGTCATATCACGCGACTAG".to_string().chars().collect()];
-//     let id_set:Vec<String> = vec!["first".to_string(),"second".to_string(),"third".to_string()];
-//     let it = string_set.iter().zip(id_set.iter());
-//     for (string,id) in it{
-//         tree.add_string(string.clone(), id.clone());
-//     }
-//     assert_eq!(tree.find("XYZ".to_string().chars().collect::<&Vec<char>>()), vec![(&"first".to_string(), &(14 as usize))]);
-// }
+#[test]
+fn add_string_set(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "TTATAGCCGTACAGACCGAA".to_string().chars().collect(), "ATCTTAAGTCATATCACGCGACTAG".to_string().chars().collect()];
+    let id_set:Vec<String> = vec!["first".to_string(),"second".to_string(),"third".to_string()];
+    let it = string_set.iter().zip(id_set.iter());
+    for (string,id) in it{
+        tree.add_string(string.clone(), id.clone());
+    }
+    assert_eq!(tree.find(&"XYZ".to_string().chars().collect()), vec![(&"first".to_string(), &(14 as usize))]);
+}
 
 #[test]
 fn exact_pattern_match(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "BANANA".chars().collect();
+    let item_string:Vec<char> = "Hello".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id);
     assert_eq!(tree.find(&"Hello".to_string().chars().collect()), vec![(&"World".to_string(), &0)]);

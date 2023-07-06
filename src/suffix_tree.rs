@@ -140,11 +140,9 @@ where
                             self.nodes.get_mut(&self._active_node).unwrap().set_child(self._active_edge.unwrap(), self.num_nodes-1);
 
                             let mut leaf_node = Node::new(i as isize, None);
-                            println!("{}", i);
                             leaf_node.set_string_id(string_ids_num);
                             leaf_node.add_seq(string_ids_num, self._start_idx as usize);
                             self.nodes.insert(self.num_nodes, leaf_node);
-                            println!("{}, {}", self.num_nodes, self.nodes.get(&self.num_nodes).unwrap().get_start());
 
                             self.num_nodes += 1;
                             self._string_leaves.push(self.num_nodes-1);
@@ -206,7 +204,6 @@ where
             None => Vec::new(),
             Some(i) => {
                 self._leaves_of_node(i, &mut leaves);
-                println!("{:?}", leaves);
                 let mut ids_and_indexes = Vec::new();
                 for leaf in &leaves{
                     for (id, idx) in self.nodes.get(leaf).unwrap().get_data(){
@@ -292,13 +289,12 @@ where
     where
         S: Serializer,
     {
-        let mut state = serializer.serialize_struct("KGST", 7)?;
+        let mut state = serializer.serialize_struct("KGST", 6)?;
         state.serialize_field("num_nodes", &self.num_nodes)?;
         state.serialize_field("nodes", &self.nodes)?;
         state.serialize_field("_terminal_character", &self._terminal_character)?;
         state.serialize_field("_strings", &self._strings)?;
         state.serialize_field("_start_idx", &self._start_idx)?;
-        state.serialize_field("leaves", &self.leaves)?;
         let new_main_strings: HashMap<U, Vec<T>> = self._main_strings.clone().into_iter().map(|(key, value)| (key, value.to_vec())).collect();
         state.serialize_field("_main_strings", &new_main_strings)?;
         state.end()
