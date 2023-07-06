@@ -55,7 +55,6 @@ where
             _start_idx: 0,
             leaves: Vec::new(),
             _main_strings: HashMap::new(),
-            depth: 0,
         }
     }
 
@@ -74,10 +73,9 @@ where
         self._strings= HashMap::new();
         self._start_idx= 0;
         self.leaves= Vec::new();
-        self.depth=0;
     }
 
-    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: isize){
+    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
         seq.push(self._terminal_character);
         let string_ids_num: usize = self._strings.len() + 1;
         self._strings.insert(string_ids_num, TreeItem::new(seq.clone().into(), seq_id.clone()));
@@ -86,7 +84,6 @@ where
         let mut i = 0;
         self._start_idx = 0;
         self._terminal_er3 = false;
-        self.depth = 0;
         while i <= string_len {
             let leaf_end = i as isize;
             self._need_suffix_link = None;
@@ -96,12 +93,6 @@ where
                 if self._active_length == 0{
                     self._active_edge_index = i as isize;
                     self._active_edge = Some(string[i]);
-                }
-                if self._active_length>= max_depth{
-
-                }
-                else{
-
                 }
                 let next_node_id = self.nodes.get(&self._active_node).unwrap().get_child(self._active_edge);
                 match next_node_id{
@@ -194,7 +185,7 @@ where
         self._need_suffix_link = Some(node_id);
     }
 
-    fn _walk_down(&mut self, next_node_id:isize, string:Vec<T>, leaf_end:isize)->bool{
+    fn _walk_down(&mut self, next_node_id:isize, string:&Vec<T>, leaf_end:isize)->bool{
         let edge_length = self.nodes.get(&next_node_id).unwrap().edge_length(leaf_end);
         if self._active_length >= edge_length{
             self._active_length -= edge_length;
@@ -225,7 +216,7 @@ where
         }
     }
 
-    fn _find_node(&self, q_string:Vec<T>)->Option<isize>{
+    fn _find_node(&self, q_string:&Vec<T>)->Option<isize>{
         let mut node: Option<isize> = Some(self._root);
         let mut c: T = q_string[0];
         let mut i = 0;
