@@ -1,124 +1,109 @@
 use std::collections::HashMap;
+use std::fmt::{Display, Debug};
+use std::hash::Hash;
 use std::option::Option;
-use serde::{Serialize, Deserialize};
-use std::collections::LinkedList;
+use std::rc::Rc;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Data{
-    string_id: usize,
-    start_idx: usize,
-}
+use crate::tree_item::TreeItem;
 
-impl Data{
-    pub fn new(string_id: usize, start_idx: usize)->Data{
-        Data { string_id: string_id, start_idx: start_idx }
-    }
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct Node<T>
+pub struct Node<T, U>
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone,
+    T: Display + Debug + Eq + PartialEq + Hash,
+    U: Display + Debug + Eq + PartialEq + Hash,
 {
-    children: HashMap<T, isize>,
-    suffix_link: Option<isize>,
-    string_id: Option<usize>,
-    data: LinkedList<Data>,
-    parent: Option<isize>,
-    end: Option<isize>,
-    start: isize,
+    children: HashMap<T, Rc<Node<T, U>>>,
+    suffix_link: Option<Rc<Node<T, U>>>,
+    string_id: Option<Rc<TreeItem<T, U>>>,
+    data: HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>,
+    parent: Option<Rc<Node<T, U>>>,
+    end: Option<usize>,
+    start: usize,
 }
 
-impl<'a, T> Node<T> 
+impl<T, U> Node<T, U>
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone, 
+    T: Display + Debug + Eq + PartialEq + Hash,
+    U: Display + Debug + Eq + PartialEq + Hash,
 {
-    pub fn new(start:isize, end: Option<isize>)-> Node<T>{
+    pub fn new(start:usize, end: Option<usize>)-> Node<T, U>{
         Node{
             children: HashMap::new(),
             suffix_link: None,
             parent:None,
-            data: LinkedList::new(),
+            data: HashMap::new(),
             string_id: None,
             end,
             start,
         }
     }
 
-    pub fn add_parent(&mut self, parent: isize){
+    pub fn add_parent(&mut self, parent: Rc<Node<T, U>>){
         self.parent = Some(parent);
     }
 
-    pub fn set_suffix_link(&mut self, link_node:isize){
+    pub fn set_suffix_link(&mut self, link_node:Rc<Node<T, U>>){
         self.suffix_link = Some(link_node);
     }
 
-    pub fn get_suffix_link(&self)->Option<isize>{
-        self.suffix_link
-    }
-
-    pub fn add_seq(&mut self, seq_id:usize, start:usize){
-        self.data.push_back(Data::new(seq_id, start));
-    }
-
-    pub fn get_child(&self, child:Option<T>)->Option<isize>{
-        match child{
+    pub fn get_suffix_link(&self)->Option<&Rc<Node<T, U>>>{
+        match &self.suffix_link{
             None => None,
-            Some(i) => self.children.get(&i).copied(),
-            }
+            Some(i) => Some(&i),
+        }
+    }
+
+    pub fn add_seq(&mut self, seq_id:Rc<TreeItem<T, U>>, start:usize){
+        self.data.entry(seq_id).or_default().push((start, None));
+    }
+
+    pub fn get_child(&self, child:T)->Option<&Rc<Node<T, U>>>{
+            self.children.get(&child)
     }
     
-    pub fn set_child(&mut self, edge:T, child:isize){
+    pub fn set_child(&mut self, edge:T, child:Rc<Node<T, U>>){
         self.children.insert(edge, child);
     }
 
-    pub fn set_end(&mut self, end:isize){
+    pub fn set_end(&mut self, end:usize){
         self.end = Some(end);
     }
 
-    pub fn get_end(&self, default_end:isize)->isize{
+    pub fn get_end(&self, default_end:usize)->usize{
         match self.end{
             None => default_end,
             Some(x) => x,
         }
     }
 
-    pub fn edge_length(&self, default_end:isize)-> isize{
+    pub fn edge_length(&self, default_end:usize)-> usize{
         self.get_end(default_end) + 1 - self.start
     }
 
-    pub fn get_string_id(&self)->Option<usize>{
-        self.string_id.clone()
+    pub fn get_string_id(&self)->&Option<Rc<TreeItem<T, U>>>{
+        &self.string_id
     }
 
-    pub fn get_start(&self)->isize{
-        self.start
+    pub fn get_start(&self)->&usize{
+        &self.start
     }
 
-    pub fn set_string_id(&mut self, string_id:usize){
+    pub fn set_string_id(&mut self, string_id:Rc<TreeItem<T, U>>){
         self.string_id = Some(string_id);
     }
 
-    pub fn set_start(&mut self, new_start:isize){
+    pub fn set_start(&mut self, new_start:usize){
         self.start = new_start;
     }
 
     pub fn has_children(&self)->bool{
-        match self.children.is_empty(){
-            true => false,
-            false => true,
-        }
+        !self.children.is_empty()
     }
 
-    pub fn get_children(&self)->HashMap<T, isize>{
-        self.children.clone()
+    pub fn get_children(&self)->&HashMap<T, Rc<Node<T, U>>>{
+        &self.children
     }
 
-    pub fn get_data(&self)->Vec<(&usize, &usize)>{
-        let mut data = Vec::new();
-        for item in self.data.iter(){
-            data.push((&item.string_id, &item.start_idx));
-        }
-        data
+    pub fn get_data(&self)->&HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>{
+        &self.data
     }
 }

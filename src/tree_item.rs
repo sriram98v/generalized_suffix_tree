@@ -1,51 +1,31 @@
-use std::sync::Arc;
-use serde::ser::{Serialize, Serializer, SerializeStruct};
+use core::fmt::Debug;
+use std::{fmt::Display, hash::Hash};
 
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Hash, Eq, PartialEq)]
 pub struct TreeItem<T, U>
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone,
-    U: std::cmp::Eq + std::hash::Hash + Clone,
+    T: Display + Debug + Eq + PartialEq + Hash,
+    U: Display + Debug + Eq + PartialEq + Hash
 {
-    string: Arc<[T]>,
-    string_id: U,
+    string: Vec<T>,
+    id: U,
 }
 
-impl<'a, T, U> TreeItem<T, U> 
+
+impl<T, U> TreeItem<T, U> 
 where
-    T: std::cmp::Eq + std::hash::Hash + Clone, 
-    U: std::cmp::Eq + std::hash::Hash + Clone, 
+    T: Display + Debug + Eq + PartialEq + Hash,
+    U: Display + Debug + Eq + PartialEq + Hash
 {
-    pub fn new(string: Arc<[T]>, string_id: U) -> TreeItem<T, U>{
-        TreeItem{
-            string: string,
-            string_id: string_id,
-        }
+    pub fn new(id: U, string: Vec<T>)->TreeItem<T, U>{
+        TreeItem { string: string, id: id }
     }
 
-    pub fn get_string(&self)->&Arc<[T]>{
+    pub fn get_string(&self) -> &Vec<T>{
         &self.string
     }
 
-    pub fn get_id(&self)->&U{
-        &self.string_id
-    }
-}
-
-impl<T, U> Serialize for TreeItem<T, U> 
-where
-    T: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
-    U: std::cmp::Eq + std::hash::Hash + Clone + Serialize,
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        // 3 is the number of fields in the struct.
-        let mut state = serializer.serialize_struct("TreeItem", 2)?;
-        state.serialize_field("string", &self.string.to_vec())?;
-        state.serialize_field("string_id", &self.string_id)?;
-        state.end()
+    pub fn get_id(&self) -> &U{
+        &self.id
     }
 }
