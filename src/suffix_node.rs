@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
@@ -11,11 +12,11 @@ where
     T: Display + Debug + Eq + PartialEq + Hash,
     U: Display + Debug + Eq + PartialEq + Hash,
 {
-    children: HashMap<T, Rc<Node<T, U>>>,
-    suffix_link: Option<Rc<Node<T, U>>>,
+    children: HashMap<T, Rc<RefCell<Node<T, U>>>>,
+    suffix_link: Option<Rc<RefCell<Node<T, U>>>>,
     string_id: Option<Rc<TreeItem<T, U>>>,
     data: HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>,
-    parent: Option<Rc<Node<T, U>>>,
+    parent: Option<Rc<RefCell<Node<T, U>>>>,
     end: Option<usize>,
     start: usize,
 }
@@ -37,15 +38,15 @@ where
         }
     }
 
-    pub fn add_parent(&mut self, parent: Rc<Node<T, U>>){
+    pub fn add_parent(&mut self, parent: Rc<RefCell<Node<T, U>>>){
         self.parent = Some(parent);
     }
 
-    pub fn set_suffix_link(&mut self, link_node:Rc<Node<T, U>>){
+    pub fn set_suffix_link(&mut self, link_node:Rc<RefCell<Node<T, U>>>){
         self.suffix_link = Some(link_node);
     }
 
-    pub fn get_suffix_link(&self)->Option<&Rc<Node<T, U>>>{
+    pub fn get_suffix_link(&self)->Option<&Rc<RefCell<Node<T, U>>>>{
         match &self.suffix_link{
             None => None,
             Some(i) => Some(&i),
@@ -56,11 +57,11 @@ where
         self.data.entry(seq_id).or_default().push((start, None));
     }
 
-    pub fn get_child(&self, child:T)->Option<&Rc<Node<T, U>>>{
-            self.children.get(&child)
+    pub fn get_child(&self, child:&T)->Option<&Rc<RefCell<Node<T, U>>>>{
+        self.children.get(child)
     }
     
-    pub fn set_child(&mut self, edge:T, child:Rc<Node<T, U>>){
+    pub fn set_child(&mut self, edge:T, child:Rc<RefCell<Node<T, U>>>){
         self.children.insert(edge, child);
     }
 
@@ -79,8 +80,8 @@ where
         self.get_end(default_end) + 1 - self.start
     }
 
-    pub fn get_string_id(&self)->&Option<Rc<TreeItem<T, U>>>{
-        &self.string_id
+    pub fn get_string_id(&self)->Option<Rc<TreeItem<T, U>>>{
+        self.string_id.clone()
     }
 
     pub fn get_start(&self)->&usize{
@@ -99,7 +100,7 @@ where
         !self.children.is_empty()
     }
 
-    pub fn get_children(&self)->&HashMap<T, Rc<Node<T, U>>>{
+    pub fn get_children(&self)->&HashMap<T, Rc<RefCell<Node<T, U>>>>{
         &self.children
     }
 
