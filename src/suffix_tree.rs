@@ -8,6 +8,7 @@ use std::rc::Rc;
 use std::option::Option;
 
 
+#[derive(Debug)]
 pub struct KGST<T, U>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
@@ -55,13 +56,13 @@ where
         self.leaves = Vec::new();
     }
 
-    fn leaves_of_node(&self, node:&Rc<RefCell<Node<T, U>>>, leaves:&mut Vec<Rc<RefCell<Node<T, U>>>>){
-        if node.borrow().has_children(){
+    fn leaves_of_node(node:&Rc<RefCell<Node<T, U>>>, leaves:&mut Vec<Rc<RefCell<Node<T, U>>>>){
+        if !node.borrow().has_children(){
             leaves.push(node.clone());
         }
 
         for child in node.borrow().get_children().values(){
-            self.leaves_of_node(child, leaves);
+            Self::leaves_of_node(child, leaves);
         }   
     }
 
@@ -80,7 +81,7 @@ where
                     c = &q_string[i];
                     let mut j = 1;
                     while i < q_string.len() && j < n.borrow().edge_length(0){
-                        if c != &n.borrow().get_string_id().unwrap().get_string()[(n.borrow().get_start() + j) as usize]{
+                        if c != &n.borrow().get_string_id().unwrap().get_string()[n.borrow().get_start() + j]{
                             return None;
                         }
                         if i==q_string.len()-1{
@@ -101,7 +102,7 @@ where
         match node{
             None => Vec::new(),
             Some(i) => {
-                self.leaves_of_node(&i, &mut leaves);
+                Self::leaves_of_node(&i, &mut leaves);
                 let mut ids_and_indexes: Vec<(Rc<TreeItem<T, U>>, Vec<usize>)> = Vec::new();
                 for leaf in leaves{
                     for (treeitem, idx) in leaf.borrow().get_data(){
@@ -144,9 +145,9 @@ where
         let new_string: Rc<TreeItem<T, U>> = Rc::new(TreeItem::new(seq_id, seq.clone()));
         self.strings.insert(new_string.clone());
         // self.strings.insert(string_ids_num, TreeItem::new(seq.clone().into(), seq_id.clone()));
-        let string = &seq;
-        let string_len = seq.len()-1;
-        let mut i = 0;
+        let string: &Vec<T> = &seq;
+        let string_len: usize = seq.len()-1;
+        let mut i: usize = 0;
         self.start_idx = 0;
         let mut terminal_er3 = false;
         let mut need_suffix_link: Option<Rc<RefCell<Node<T, U>>>>;
@@ -166,7 +167,7 @@ where
                     active_edge_index = i;
                     active_edge = Some(string[i].clone());
                 }
-                let next_node = active_node.borrow().get_child(active_edge.as_ref().unwrap()).clone();
+                let next_node = active_node.borrow().get_child(active_edge.as_ref().unwrap());
                 match next_node{
                     None => {
                         let new_node: Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node::new(i.try_into().unwrap(), None)));
