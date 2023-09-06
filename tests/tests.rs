@@ -7,13 +7,18 @@ fn create_tree() {
 }
 
 #[test]
-fn add_string_full(){
+fn add_string_no_repeats(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Hello".chars().collect();
+    let item_string:Vec<char> = "Helo".chars().collect();
     let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id);
-    // let sstring: Vec<(Rc<generalized_suffix_tree::tree_item::TreeItem<char, String>>, Vec<usize>)> = tree.find(&item_string);
-    // assert_eq!(sstring, vec![("World".to_string(), vec![0])]);
+    tree.add_string(item_string.clone(), item_id.clone());
+    let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
+                                                    .into_iter()
+                                                    .map(|(treeitem, pos_vec)|{
+                                                        (treeitem.get_id().clone(), pos_vec)
+                                                    })
+                                                    .collect();
+    assert_eq!(sstring, vec![(item_id, vec![0 as usize])]);
 }
 
 // #[test]
