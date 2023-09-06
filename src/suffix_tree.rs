@@ -1,10 +1,11 @@
 use crate::suffix_node::Node;
 use crate::tree_item::TreeItem;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap};
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::rc::Rc;
+// use std::mem;
 use std::option::Option;
 
 
@@ -26,7 +27,7 @@ where
     terminal_character: T,
     // terminal_er3: bool,
     strings: HashSet<Rc<TreeItem<T, U>>>,
-    start_idx: usize,
+    // start_idx: usize,
     leaves: Vec<Rc<RefCell<Node<T, U>>>>,
     // _main_strings: HashMap<U, Vec<T>>,
 }
@@ -40,19 +41,35 @@ where
     pub fn new(terminal_character: T)->KGST<T, U>{
         KGST{
             // num_nodes: 1,
-            root: Rc::new(RefCell::new(Node::new(0, Some(0)))),
+            root: Rc::new(RefCell::new(Node{
+                children: HashMap::new(),
+                suffix_link: None,
+                parent:None,
+                data: HashMap::new(),
+                string_id: None,
+                end: Some(0),
+                start: 0,
+            })),
             terminal_character: terminal_character,
             strings: HashSet::new(),
-            start_idx: 0,
+            // start_idx: 0,
             leaves: Vec::new(),
         }
     }
 
     pub fn clear(&mut self){
         // self.num_nodes = 1;
-        self.root = Rc::new(RefCell::new(Node::new(0, Some(0))));
+        self.root = Rc::new(RefCell::new(Node{
+            children: HashMap::new(),
+            suffix_link: None,
+            parent:None,
+            data: HashMap::new(),
+            string_id: None,
+            end: Some(0),
+            start: 0,
+        }));
         self.strings = HashSet::new();
-        self.start_idx = 0;
+        // self.start_idx = 0;
         self.leaves = Vec::new();
     }
 
@@ -62,7 +79,7 @@ where
         }
 
         for child in node.borrow().get_children().values(){
-            Self::leaves_of_node(child, leaves);
+            Self::leaves_of_node(child.as_ref().unwrap(), leaves);
         }   
     }
 
@@ -118,10 +135,10 @@ where
         &self.strings
     }
 
-    fn add_suffix_link(&self, node: Rc<RefCell<Node<T, U>>>, need_suffix_link: Option<Rc<RefCell<Node<T, U>>>>) -> Option<Rc<RefCell<Node<T, U>>>>{
+    fn add_suffix_link(node: Rc<RefCell<Node<T, U>>>, need_suffix_link: Option<Rc<RefCell<Node<T, U>>>>) -> Option<Rc<RefCell<Node<T, U>>>>{
         match need_suffix_link{
             None => (),
-            Some(i) => i.clone().borrow_mut().set_suffix_link(node.clone()),
+            Some(i) => i.borrow_mut().set_suffix_link(node.clone()),
         };
         Some(node)
     }
@@ -148,8 +165,8 @@ where
         let string: &Vec<T> = &seq;
         let string_len: usize = seq.len()-1;
         let mut i: usize = 0;
-        self.start_idx = 0;
-        let mut terminal_er3 = false;
+        let mut start_idx: usize = 0;
+        let mut terminal_er3: bool = false;
         let mut need_suffix_link: Option<Rc<RefCell<Node<T, U>>>>;
         let mut remainder: usize = 0;
         let mut active_length: usize = 0;
@@ -170,16 +187,30 @@ where
                 let next_node = active_node.borrow().get_child(active_edge.as_ref().unwrap());
                 match next_node{
                     None => {
-                        let new_node: Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node::new(i.try_into().unwrap(), None)));
-                        new_node.borrow_mut().add_seq(new_string.clone(), self.start_idx.clone());
-                        new_node.borrow_mut().set_string_id(new_string.clone());
+                        let new_node: Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node{
+                            children: HashMap::new(),
+                            suffix_link: None,
+                            string_id: Some(new_string.clone()),
+                            data: HashMap::from([(new_string.clone(), vec![(start_idx.clone(), None)])]),
+                            parent: Some(active_node.clone()),
+                            end: None,
+                            start: start_idx.clone(),
+                        }));
+                        active_node.borrow_mut().set_child(active_edge.clone().unwrap(), new_node.clone());
+
+
+
+                        // let new_node: Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node::new(i.try_into().unwrap(), None)));
+                        // new_node.borrow_mut().add_seq(new_string.clone(), self.start_idx.clone());
+                        // new_node.borrow_mut().set_string_id(new_string.clone());
                         // new_node.add_parent(self._active_node);
                         // self.nodes.insert(self.num_nodes, new_node);
                         // self.num_nodes+=1;
+                        // string_leaves.push(active_node.borrow_mut().get_child(active_edge.as_ref().unwrap()).unwrap().clone());
                         string_leaves.push(new_node.clone());
-                        self.start_idx += 1;
-                        active_node.borrow_mut().set_child(active_edge.clone().unwrap(), new_node.clone());
-                        need_suffix_link = self.add_suffix_link(active_node.clone(), need_suffix_link);
+                        start_idx += 1;
+                        // active_node.borrow_mut().set_child(active_edge.clone().unwrap(), new_node.clone());
+                        need_suffix_link = Self::add_suffix_link(active_node.clone(), need_suffix_link);
                     },
                     Some(node) => {
                         let walk_down = Self::walk_down(node.clone(), string, leaf_end, active_length, active_edge_index, active_edge, active_node);
@@ -189,43 +220,67 @@ where
                         }
                         else if node.borrow().get_string_id().unwrap().get_string()[node.borrow().get_start() + active_length] == string[i]{
                             if string[i] == self.terminal_character{
-                                node.borrow_mut().add_seq(new_string.clone(), self.start_idx.clone());
-                                self.start_idx += 1;
+                                node.borrow_mut().add_seq(new_string.clone(), start_idx.clone());
+                                start_idx += 1;
                                 if !terminal_er3{
-                                    need_suffix_link = self.add_suffix_link(active_node.clone(), need_suffix_link);
+                                    need_suffix_link = Self::add_suffix_link(active_node.clone(), need_suffix_link);
                                     terminal_er3 = true;
                                 }
                             }
                             else{
                                 active_length += 1;
-                                self.add_suffix_link(active_node.clone(), need_suffix_link);
+                                Self::add_suffix_link(active_node.clone(), need_suffix_link);
                                 break;
                             }
                         }
                         else{
-                            print!("running here");
-                            let split_node:Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node::new(node.borrow().get_start().clone(), Some(node.borrow().get_start().clone() + active_length - 1))));
-                            split_node.borrow_mut().set_string_id(node.borrow().get_string_id().unwrap());
-                            split_node.borrow_mut().add_seq(node.borrow().get_string_id().unwrap(), self.start_idx.clone());
-                            // self.nodes.insert(self.num_nodes, split_node);
+                            // println!("1");
+                            // let split_node:Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node::new(node.borrow().get_start().clone(), Some(node.borrow().get_start().clone() + active_length - 1))));
+                            let split_node:Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node{
+                                children: HashMap::from([
+                                    (string[i].clone(), Some(Rc::new(RefCell::new(Node{
+                                                                    children: HashMap::new(),
+                                                                    suffix_link: None,
+                                                                    parent:None,
+                                                                    data: HashMap::from([(new_string.clone(), vec![(start_idx.clone(), None)])]),
+                                                                    string_id: Some(new_string.clone()),
+                                                                    end: None,
+                                                                    start: 0,
+                                                                }))))
+                                    ]),
+                                suffix_link: None,
+                                string_id: node.borrow().get_string_id(),
+                                data: HashMap::from([(node.borrow().get_string_id().unwrap(), vec![(start_idx.clone(), None)])]),
+                                parent: Some(active_node.clone()),
+                                end: None,
+                                start: node.borrow().get_start().clone(),
+                            }));
+                            string_leaves.push(split_node.borrow_mut().get_child(&string[i]).unwrap());
 
+
+
+                            // split_node.borrow_mut().set_string_id(node.borrow().get_string_id().unwrap());
+                            // split_node.borrow_mut().add_seq(node.borrow().get_string_id().unwrap(), self.start_idx.clone());
+                            // self.nodes.insert(self.num_nodes, split_node);
+                            // println!("2");
                             // self.num_nodes += 1;
                             active_node.borrow_mut().set_child(active_edge.clone().unwrap(), split_node.clone());
-
-                            let leaf_node = Rc::new(RefCell::new(Node::new(i, None)));
-                            leaf_node.borrow_mut().set_string_id(new_string.clone());
-                            leaf_node.borrow_mut().add_seq(new_string.clone(), self.start_idx.clone());
+                            // println!("3");
+                            // let leaf_node = Rc::new(RefCell::new(Node::new(i, None)));
+                            // leaf_node.borrow_mut().set_string_id(new_string.clone());
+                            // leaf_node.borrow_mut().add_seq(new_string.clone(), self.start_idx.clone());
                             // self.nodes.insert(self.num_nodes, leaf_node);
-
+                            // println!("4");
                             // self.num_nodes += 1;
-                            string_leaves.push(leaf_node.clone());
-                            self.start_idx += 1;
-                            split_node.borrow_mut().set_child(string[i].clone(), leaf_node);
+                            // string_leaves.push(leaf_node.clone());
+                            start_idx += 1;
+                            // split_node.borrow_mut().set_child(string[i].clone(), leaf_node);
                             let tmp_start = node.borrow().get_start() + active_length;
                             node.borrow_mut().set_start(tmp_start);
                             let tmp_char = node.borrow().get_string_id().unwrap().get_string()[node.borrow().get_start() + 0].clone();
                             split_node.borrow_mut().set_child(tmp_char, node.clone());
-                            need_suffix_link = self.add_suffix_link(split_node, need_suffix_link);
+                            need_suffix_link = Self::add_suffix_link(split_node, need_suffix_link);
+                            // println!("5");
                         }
                     },
                 };
@@ -246,8 +301,7 @@ where
         for leaf in string_leaves.iter(){
             leaf.borrow_mut().set_end(string.len() - 1);
         }     
-        string_leaves.clear()
-         
+        string_leaves.clear();
     }
 
 
