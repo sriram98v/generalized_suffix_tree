@@ -21,6 +21,21 @@ fn add_string_no_repeats(){
     assert_eq!(sstring, vec![(item_id, vec![0 as usize])]);
 }
 
+#[test]
+fn add_string_repeats(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "Hello".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.add_string(item_string.clone(), item_id.clone());
+    let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
+                                                    .into_iter()
+                                                    .map(|(treeitem, pos_vec)|{
+                                                        (treeitem.get_id().clone(), pos_vec)
+                                                    })
+                                                    .collect();
+    assert_eq!(sstring, vec![(item_id, vec![0 as usize])]);
+}
+
 // #[test]
 // fn add_string_set(){
 //     let mut tree: KGST<char, String> = KGST::new('$');
