@@ -1,4 +1,4 @@
-use core::fmt::Debug;
+use core::fmt::{Debug, self};
 use std::{fmt::Display, hash::Hash};
 
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -28,4 +28,16 @@ where
     pub fn get_id(&self) -> &U{
         &self.id
     }
+}
+
+
+impl<T, U> Display for TreeItem<T, U> 
+where
+    T: Display + Debug + Eq + PartialEq + Hash,
+    U: Display + Debug + Eq + PartialEq + Hash
+{
+    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        todo!()
+    }
+
 }
