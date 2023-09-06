@@ -13,7 +13,7 @@ where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
     U: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    num_nodes: usize,
+    // num_nodes: usize,
     root: Rc<RefCell<Node<T, U>>>,
     // active_node: &Rc<Node<T, U>>,
     // active_edge: Option<T>,
@@ -38,7 +38,7 @@ where
 {
     pub fn new(terminal_character: T)->KGST<T, U>{
         KGST{
-            num_nodes: 1,
+            // num_nodes: 1,
             root: Rc::new(RefCell::new(Node::new(0, Some(0)))),
             terminal_character: terminal_character,
             strings: HashSet::new(),
@@ -48,7 +48,7 @@ where
     }
 
     pub fn clear(&mut self){
-        self.num_nodes = 1;
+        // self.num_nodes = 1;
         self.root = Rc::new(RefCell::new(Node::new(0, Some(0))));
         self.strings = HashSet::new();
         self.start_idx = 0;
@@ -117,7 +117,7 @@ where
         &self.strings
     }
 
-    fn add_suffix_link(&mut self, node: Rc<RefCell<Node<T, U>>>, need_suffix_link: Option<Rc<RefCell<Node<T, U>>>>) -> Option<Rc<RefCell<Node<T, U>>>>{
+    fn add_suffix_link(&self, node: Rc<RefCell<Node<T, U>>>, need_suffix_link: Option<Rc<RefCell<Node<T, U>>>>) -> Option<Rc<RefCell<Node<T, U>>>>{
         match need_suffix_link{
             None => (),
             Some(i) => i.clone().borrow_mut().set_suffix_link(node.clone()),
@@ -125,12 +125,12 @@ where
         Some(node)
     }
 
-    fn walk_down(&mut self, next_node:Rc<RefCell<Node<T, U>>>, string:&Vec<T>, leaf_end:usize, mut active_length: usize, mut active_edge_index: usize, mut active_edge: Option<T>, mut active_node: Rc<RefCell<Node<T, U>>>)->(bool, usize, usize, Option<T>, Rc<RefCell<Node<T, U>>>){
+    fn walk_down(next_node:Rc<RefCell<Node<T, U>>>, string:&Vec<T>, leaf_end:usize, mut active_length: usize, mut active_edge_index: usize, mut active_edge: Option<T>, mut active_node: Rc<RefCell<Node<T, U>>>)->(bool, usize, usize, Option<T>, Rc<RefCell<Node<T, U>>>){
         let edge_length = next_node.borrow().edge_length(leaf_end);
         if active_length >= edge_length{
             active_length -= edge_length;
             active_edge_index += edge_length;
-            active_edge = Some(string[active_edge_index as usize].clone());
+            active_edge = Some(string[active_edge_index].clone());
             active_node = next_node;
             return (true, active_length, active_edge_index, active_edge, active_node);
         }
@@ -139,7 +139,7 @@ where
 
 
     pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
-        seq.push(self.terminal_character);
+        seq.push(self.terminal_character.clone());
         // let string_ids_num: usize = self._strings.len() + 1;
         let new_string: Rc<TreeItem<T, U>> = Rc::new(TreeItem::new(seq_id, seq.clone()));
         self.strings.insert(new_string.clone());
@@ -149,103 +149,103 @@ where
         let mut i = 0;
         self.start_idx = 0;
         let mut terminal_er3 = false;
-        let mut need_suffix_link: Option<Rc<RefCell<Node<T, U>>>> = None;
+        let mut need_suffix_link: Option<Rc<RefCell<Node<T, U>>>>;
         let mut remainder: usize = 0;
         let mut active_length: usize = 0;
         let mut active_edge_index: usize = 0;
         let mut active_edge: Option<T> = None;
-        let mut active_node: Option<Rc<RefCell<Node<T, U>>>> = None;
+        let mut active_node: Rc<RefCell<Node<T, U>>> = self.root.clone();
         let mut string_leaves: Vec<Rc<RefCell<Node<T, U>>>> = Vec::new();
         while i <= string_len {
-            let leaf_end = i as usize;
+            let leaf_end = i;
             need_suffix_link = None;
             remainder += 1;
             while remainder > 0{
 
                 if active_length == 0{
                     active_edge_index = i;
-                    active_edge = Some(string[i]);
+                    active_edge = Some(string[i].clone());
                 }
-                let next_node = active_node.unwrap().borrow().get_child(active_edge.as_ref().unwrap());
+                let next_node = active_node.borrow().get_child(active_edge.as_ref().unwrap()).clone();
                 match next_node{
                     None => {
-                        let mut new_node: Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node::new(i.try_into().unwrap(), None)));
-                        new_node.borrow_mut().add_seq(new_string.clone(), self.start_idx);
+                        let new_node: Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node::new(i.try_into().unwrap(), None)));
+                        new_node.borrow_mut().add_seq(new_string.clone(), self.start_idx.clone());
                         new_node.borrow_mut().set_string_id(new_string.clone());
                         // new_node.add_parent(self._active_node);
                         // self.nodes.insert(self.num_nodes, new_node);
-                        self.num_nodes+=1;
-                        string_leaves.push(new_node);
+                        // self.num_nodes+=1;
+                        string_leaves.push(new_node.clone());
                         self.start_idx += 1;
-                        active_node.unwrap().borrow_mut().set_child(active_edge.unwrap(), new_node);
-                        self.add_suffix_link(active_node.unwrap(), need_suffix_link);
+                        active_node.borrow_mut().set_child(active_edge.clone().unwrap(), new_node.clone());
+                        need_suffix_link = self.add_suffix_link(active_node.clone(), need_suffix_link);
                     },
                     Some(node) => {
-                        let walk_down = self.walk_down(node, string, leaf_end);
-                        (active_length, active_edge_index, active_edge, active_node) = (walk_down.1, walk_down.2, walk_down.3, Some(walk_down.4));
+                        let walk_down = Self::walk_down(node.clone(), string, leaf_end, active_length, active_edge_index, active_edge, active_node);
+                        (active_length, active_edge_index, active_edge, active_node) = (walk_down.1, walk_down.2, walk_down.3, walk_down.4);
                         if walk_down.0{
                             continue;
                         }
-                        else if self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[(self.nodes.get(&node_id).unwrap().get_start() + self._active_length) as usize] == string[i]{
-                            if string[i] == self.terminal_character as T{
-                                self.nodes.get_mut(&node_id).unwrap().add_seq(string_ids_num, self._start_idx as usize);
-                                self._start_idx += 1;
-                                if !self._terminal_er3{
-                                    self._add_suffix_link(self._active_node);
-                                    self._terminal_er3 = true;
+                        else if node.borrow().get_string_id().unwrap().get_string()[node.borrow().get_start() + active_length] == string[i]{
+                            if string[i] == self.terminal_character{
+                                node.borrow_mut().add_seq(new_string.clone(), self.start_idx.clone());
+                                self.start_idx += 1;
+                                if !terminal_er3{
+                                    need_suffix_link = self.add_suffix_link(active_node.clone(), need_suffix_link);
+                                    terminal_er3 = true;
                                 }
                             }
                             else{
-                                self._active_length += 1;
-                                self._add_suffix_link(self._active_node);
+                                active_length += 1;
+                                self.add_suffix_link(active_node.clone(), need_suffix_link);
                                 break;
                             }
                         }
                         else{
+                            print!("running here");
+                            let split_node:Rc<RefCell<Node<T, U>>> = Rc::new(RefCell::new(Node::new(node.borrow().get_start().clone(), Some(node.borrow().get_start().clone() + active_length - 1))));
+                            split_node.borrow_mut().set_string_id(node.borrow().get_string_id().unwrap());
+                            split_node.borrow_mut().add_seq(node.borrow().get_string_id().unwrap(), self.start_idx.clone());
+                            // self.nodes.insert(self.num_nodes, split_node);
 
-                            let mut split_node:Node<T> = Node::new(self.nodes.get(&node_id).unwrap().get_start(), Some(self.nodes.get(&node_id).unwrap().get_start() + self._active_length - 1));
-                            split_node.set_string_id(self.nodes.get(&node_id).unwrap().get_string_id().unwrap());
-                            split_node.add_seq(self.nodes.get(&node_id).unwrap().get_string_id().unwrap(), self._start_idx as usize);
-                            self.nodes.insert(self.num_nodes, split_node);
+                            // self.num_nodes += 1;
+                            active_node.borrow_mut().set_child(active_edge.clone().unwrap(), split_node.clone());
 
-                            self.num_nodes += 1;
-                            self.nodes.get_mut(&self._active_node).unwrap().set_child(self._active_edge.unwrap(), self.num_nodes-1);
+                            let leaf_node = Rc::new(RefCell::new(Node::new(i, None)));
+                            leaf_node.borrow_mut().set_string_id(new_string.clone());
+                            leaf_node.borrow_mut().add_seq(new_string.clone(), self.start_idx.clone());
+                            // self.nodes.insert(self.num_nodes, leaf_node);
 
-                            let mut leaf_node = Node::new(i as isize, None);
-                            leaf_node.set_string_id(string_ids_num);
-                            leaf_node.add_seq(string_ids_num, self._start_idx as usize);
-                            self.nodes.insert(self.num_nodes, leaf_node);
-
-                            self.num_nodes += 1;
-                            self._string_leaves.push(self.num_nodes-1);
-                            self._start_idx += 1;
-                            self.nodes.get_mut(&(self.num_nodes-2)).unwrap().set_child(string[i], self.num_nodes-1);
-                            let tmp_start = self.nodes.get(&node_id).unwrap().get_start() + self._active_length;
-                            self.nodes.get_mut(&node_id).unwrap().set_start(tmp_start);
-                            let tmp_char = self._strings.get(&(*self.nodes.get(&node_id).unwrap()).get_string_id().unwrap()).unwrap().get_string()[self.nodes.get(&node_id).unwrap().get_start() as usize];
-                            self.nodes.get_mut(&(self.num_nodes-2)).unwrap().set_child(tmp_char, node_id);
-                            self._add_suffix_link(self.num_nodes-2);
+                            // self.num_nodes += 1;
+                            string_leaves.push(leaf_node.clone());
+                            self.start_idx += 1;
+                            split_node.borrow_mut().set_child(string[i].clone(), leaf_node);
+                            let tmp_start = node.borrow().get_start() + active_length;
+                            node.borrow_mut().set_start(tmp_start);
+                            let tmp_char = node.borrow().get_string_id().unwrap().get_string()[node.borrow().get_start() + 0].clone();
+                            split_node.borrow_mut().set_child(tmp_char, node.clone());
+                            need_suffix_link = self.add_suffix_link(split_node, need_suffix_link);
                         }
                     },
                 };
-                if self._active_node == self._root && self._active_length > 0{
-                    self._active_edge_index += 1;
-                    self._active_edge = Some(string[self._active_edge_index as usize]);
-                    self._active_length -= 1;
+                if active_node.clone() == self.root && active_length > 0{
+                    active_edge_index += 1;
+                    active_edge = Some(string[active_edge_index].clone());
+                    active_length -= 1;
                 }
-                else if self._active_node != self._root{
-                    self._active_node = self.nodes.get(&self._active_node).unwrap().get_suffix_link().unwrap();
+                else if active_node.clone() != self.root{
+                    active_node = active_node.clone().borrow().get_suffix_link().unwrap();
                 }
                     
-                self._remainder -= 1
+                remainder -= 1
             }
             i +=1;
         }
 
-        for leaf in self._string_leaves.iter(){
-            self.nodes.get_mut(leaf).unwrap().set_end((string.len() - 1) as isize);
+        for leaf in string_leaves.iter(){
+            leaf.borrow_mut().set_end(string.len() - 1);
         }     
-        self._string_leaves.clear()
+        string_leaves.clear()
          
     }
 
