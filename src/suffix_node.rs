@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use crate::tree_item::TreeItem;
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Node<T, U>
 where
     T: Display + Debug + Eq + PartialEq + Hash,
@@ -75,7 +75,7 @@ where
     }
 
     pub fn edge_length(&self, default_end:usize)-> usize{
-        self.get_end(default_end) + 1 - self.start
+        self.get_end(default_end) + 1 - self.get_start()
     }
 
     pub fn get_string_id(&self)->Option<Rc<TreeItem<T, U>>>{
