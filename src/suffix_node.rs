@@ -7,12 +7,13 @@ use std::rc::Rc;
 
 use crate::tree_item::TreeItem;
 
+#[derive(PartialEq)]
 pub struct Node<T, U>
 where
     T: Display + Debug + Eq + PartialEq + Hash,
     U: Display + Debug + Eq + PartialEq + Hash,
 {
-    children: HashMap<T, Rc<RefCell<Node<T, U>>>>,
+    children: HashMap<T, Option<Rc<RefCell<Node<T, U>>>>>,
     suffix_link: Option<Rc<RefCell<Node<T, U>>>>,
     string_id: Option<Rc<TreeItem<T, U>>>,
     data: HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>,
@@ -46,23 +47,20 @@ where
         self.suffix_link = Some(link_node);
     }
 
-    pub fn get_suffix_link(&self)->Option<&Rc<RefCell<Node<T, U>>>>{
-        match &self.suffix_link{
-            None => None,
-            Some(i) => Some(&i),
-        }
+    pub fn get_suffix_link(&self)->Option<Rc<RefCell<Node<T, U>>>>{
+        self.suffix_link.clone()
     }
 
     pub fn add_seq(&mut self, seq_id:Rc<TreeItem<T, U>>, start:usize){
         self.data.entry(seq_id).or_default().push((start, None));
     }
 
-    pub fn get_child(&self, child:&T)->Option<&Rc<RefCell<Node<T, U>>>>{
-        self.children.get(child)
+    pub fn get_child(&self, child:&T)->Option<Rc<RefCell<Node<T, U>>>>{
+        self.children.get(child).unwrap().clone()
     }
     
     pub fn set_child(&mut self, edge:T, child:Rc<RefCell<Node<T, U>>>){
-        self.children.insert(edge, child);
+        self.children.insert(edge, Some(child));
     }
 
     pub fn set_end(&mut self, end:usize){
@@ -100,11 +98,19 @@ where
         !self.children.is_empty()
     }
 
-    pub fn get_children(&self)->&HashMap<T, Rc<RefCell<Node<T, U>>>>{
+    pub fn get_children(&self)->&HashMap<T, Option<Rc<RefCell<Node<T, U>>>>>{
         &self.children
     }
 
     pub fn get_data(&self)->&HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>{
         &self.data
     }
+}
+
+impl<T, U> Drop for Node<T, U>
+where
+    T: Display + Debug + Eq + PartialEq + Hash,
+    U: Display + Debug + Eq + PartialEq + Hash,
+{
+    fn drop(&mut self) { }
 }
