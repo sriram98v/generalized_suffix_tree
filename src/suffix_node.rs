@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
+// use std::ops::Deref;
 use std::option::Option;
 use std::rc::Rc;
 
@@ -10,34 +11,34 @@ use crate::tree_item::TreeItem;
 #[derive(Debug, PartialEq)]
 pub struct Node<T, U>
 where
-    T: Display + Debug + Eq + PartialEq + Hash,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone,
     U: Display + Debug + Eq + PartialEq + Hash,
 {
-    children: HashMap<T, Rc<RefCell<Node<T, U>>>>,
-    suffix_link: Option<Rc<RefCell<Node<T, U>>>>,
-    string_id: Option<Rc<TreeItem<T, U>>>,
-    data: HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>,
-    parent: Option<Rc<RefCell<Node<T, U>>>>,
-    end: Option<usize>,
-    start: usize,
+    pub children: HashMap<T, Option<Rc<RefCell<Node<T, U>>>>>,
+    pub suffix_link: Option<Rc<RefCell<Node<T, U>>>>,
+    pub string_id: Option<Rc<TreeItem<T, U>>>,
+    pub data: HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>,
+    pub parent: Option<Rc<RefCell<Node<T, U>>>>,
+    pub end: Option<usize>,
+    pub start: usize,
 }
 
 impl<T, U> Node<T, U>
 where
-    T: Display + Debug + Eq + PartialEq + Hash,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone,
     U: Display + Debug + Eq + PartialEq + Hash,
 {
-    pub fn new(start:usize, end: Option<usize>)-> Node<T, U>{
-        Node{
-            children: HashMap::new(),
-            suffix_link: None,
-            parent:None,
-            data: HashMap::new(),
-            string_id: None,
-            end,
-            start,
-        }
-    }
+    // pub fn new(start:usize, end: Option<usize>)-> Node<T, U>{
+    //     Node{
+    //         children: None,
+    //         suffix_link: None,
+    //         parent:None,
+    //         data: None,
+    //         string_id: None,
+    //         end,
+    //         start,
+    //     }
+    // }
 
     pub fn add_parent(&mut self, parent: Rc<RefCell<Node<T, U>>>){
         self.parent = Some(parent);
@@ -56,11 +57,12 @@ where
     }
 
     pub fn get_child(&self, child:&T)->Option<Rc<RefCell<Node<T, U>>>>{
-        self.children.get(child).cloned()
+        self.children.get(child).cloned().flatten()
     }
     
     pub fn set_child(&mut self, edge:T, child:Rc<RefCell<Node<T, U>>>){
-        self.children.insert(edge, child);
+        self.children.insert(edge, Some(child));
+        // self.children.insert(edge, child);
     }
 
     pub fn set_end(&mut self, end:usize){
@@ -98,19 +100,25 @@ where
         !self.children.is_empty()
     }
 
-    pub fn get_children(&self)->&HashMap<T, Rc<RefCell<Node<T, U>>>>{
-        &self.children
+    pub fn get_children(&self)->HashMap<T, Option<Rc<RefCell<Node<T, U>>>>>{
+        self.children.clone()
     }
 
-    pub fn get_data(&self)->&HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>{
-        &self.data
+    pub fn get_data(&self)->HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>{
+        self.data.clone()
     }
 }
 
-impl<T, U> Drop for Node<T, U>
-where
-    T: Display + Debug + Eq + PartialEq + Hash,
-    U: Display + Debug + Eq + PartialEq + Hash,
-{
-    fn drop(&mut self) { }
-}
+// impl<T, U> Drop for Node<T, U>
+// where
+//     T: Display + Debug + Eq + PartialEq + Hash + Clone,
+//     U: Display + Debug + Eq + PartialEq + Hash,
+// {
+//     fn drop(&mut self) {
+//         for (_key, mut value) in self.children.into_iter(){
+//             if let Some(mut next) = value.take(){
+//                 // value = next
+//             }
+//         }
+//     }
+// }
