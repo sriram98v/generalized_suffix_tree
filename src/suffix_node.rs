@@ -13,7 +13,7 @@ where
     T: Display + Debug + Eq + PartialEq + Hash,
     U: Display + Debug + Eq + PartialEq + Hash,
 {
-    children: HashMap<T, Option<Rc<RefCell<Node<T, U>>>>>,
+    children: HashMap<T, Rc<RefCell<Node<T, U>>>>,
     suffix_link: Option<Rc<RefCell<Node<T, U>>>>,
     string_id: Option<Rc<TreeItem<T, U>>>,
     data: HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>,
@@ -56,11 +56,11 @@ where
     }
 
     pub fn get_child(&self, child:&T)->Option<Rc<RefCell<Node<T, U>>>>{
-        self.children.get(child).unwrap().clone()
+        self.children.get(child).cloned()
     }
     
     pub fn set_child(&mut self, edge:T, child:Rc<RefCell<Node<T, U>>>){
-        self.children.insert(edge, Some(child));
+        self.children.insert(edge, child);
     }
 
     pub fn set_end(&mut self, end:usize){
@@ -98,7 +98,7 @@ where
         !self.children.is_empty()
     }
 
-    pub fn get_children(&self)->&HashMap<T, Option<Rc<RefCell<Node<T, U>>>>>{
+    pub fn get_children(&self)->&HashMap<T, Rc<RefCell<Node<T, U>>>>{
         &self.children
     }
 
