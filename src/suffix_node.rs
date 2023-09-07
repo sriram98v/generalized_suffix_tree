@@ -33,8 +33,12 @@ where
     //     }
     // }
 
-    pub fn add_parent(&mut self, parent: usize){
+    pub fn set_parent(&mut self, parent: usize){
         self.parent = Some(parent);
+    }
+
+    pub fn get_parent(&self)->Option<&usize>{
+        self.parent.as_ref()
     }
 
     pub fn set_suffix_link(&mut self, link_node:usize){
@@ -52,6 +56,10 @@ where
     pub fn get_child(&self, child:&T)->Option<&usize>{
         self.children.get(child)
     }
+
+    pub fn get_child_mut(&mut self, child:&T)->Option<&mut usize>{
+        self.children.get_mut(child)
+    }
     
     pub fn set_child(&mut self, edge:T, child:usize){
         self.children.insert(edge, child);
@@ -63,6 +71,7 @@ where
     }
 
     pub fn get_end(&self, default_end:usize)->usize{
+        // println!("end: {:?}, self: {:?}", self.end, self);
         match self.end{
             None => default_end,
             Some(x) => x,
@@ -70,6 +79,7 @@ where
     }
 
     pub fn edge_length(&self, default_end:usize)-> usize{
+        // println!("{}, {}, {}", self.get_end(default_end), 1, self.get_start());
         self.get_end(default_end) + 1 - self.get_start()
     }
 
