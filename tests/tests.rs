@@ -1,4 +1,5 @@
 use generalized_suffix_tree::suffix_tree::*;
+use generalized_suffix_tree::suffix_node::*;
 
 #[test]
 fn create_tree() {
@@ -36,14 +37,27 @@ fn add_string_repeats(){
     let item_string:Vec<char> = "Hello".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id.clone());
-    println!("Added");
+    // println!("{:#?}", tree.get_nodes().iter().map(|(k, v)| (k, v)).collect::<Vec<(&usize, &Node<char>)>>());
     let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
                                                     .into_iter()
                                                     .map(|(treeitem, pos_vec)|{
                                                         (treeitem.get_id().clone(), pos_vec)
                                                     })
                                                     .collect();
-    assert_eq!(sstring, vec![(item_id, vec![0 as usize])]);
+    assert_eq!(sstring, vec![(item_id.clone(), vec![0 as usize])]);
+    for i in 0..item_string.len(){
+        // println!("{}", &item_string[i..].iter().collect::<String>());
+        let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string[i..].to_vec())
+                                                    .into_iter()
+                                                    .map(|(treeitem, pos_vec)|{
+                                                        (treeitem.get_id().clone(), pos_vec)
+                                                    })
+                                                    .collect();
+        // println!("{:?}", sstring);
+        // println!("{:?}", vec![(item_id.clone(), vec![i])]);
+        // println!();
+        assert_eq!(sstring, vec![(item_id.clone(), vec![i])]);
+    }
 }
 
 // #[test]
