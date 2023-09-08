@@ -70,15 +70,15 @@ where
         self.end = Some(end);
     }
 
-    pub fn get_end(&self, default_end:usize)->usize{
+    pub fn get_end(&self, default_end:&usize)->usize{
         // println!("end: {:?}, self: {:?}", self.end, self);
         match self.end{
-            None => default_end,
+            None => default_end.clone(),
             Some(x) => x,
         }
     }
 
-    pub fn edge_length(&self, default_end:usize)-> usize{
+    pub fn edge_length(&self, default_end:&usize)-> usize{
         // println!("{}, {}, {}", self.get_end(default_end), 1, self.get_start());
         self.get_end(default_end) + 1 - self.get_start()
     }
