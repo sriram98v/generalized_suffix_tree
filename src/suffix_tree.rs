@@ -5,6 +5,31 @@ use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::option::Option;
 
+struct ActivePoint<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone,
+{
+    pub active_length: usize,
+    pub active_edge_index: usize,
+    pub active_edge: Option<T>,
+    pub active_node: usize,
+
+}
+
+impl<T> ActivePoint<T> 
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone,
+{
+    pub fn new()->ActivePoint<T>{
+        ActivePoint{
+            active_length: 0,
+            active_edge_index: 0,
+            active_edge: None,
+            active_node: 0,
+        }
+    }
+}
+
 
 #[derive(Debug)]
 pub struct KGST<T, U>
@@ -12,22 +37,11 @@ where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
     U: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    // num_nodes: usize,
     root: usize,
     nodes: HashMap<usize, Node<T>>,
-    // active_node: &Rc<Node<T, U>>,
-    // active_edge: Option<T>,
-    // active_edge_index: usize,
-    // active_length: usize,
-    // remainder: usize,
-    // need_suffix_link: Option<Rc<Node<T, U>>>,
-    // string_leaves: Vec<Rc<Node<T, U>>>,
     terminal_character: T,
-    // terminal_er3: bool,
     strings: HashMap<usize, TreeItem<T, U>>,
-    // start_idx: usize,
     leaves: Vec<usize>,
-    // _main_strings: HashMap<U, Vec<T>>,
 }
 
 
@@ -38,20 +52,18 @@ where
 {
     pub fn new(terminal_character: T)->KGST<T, U>{
         KGST{
-            // num_nodes: 1,
             nodes: HashMap::from([(0, Node{
                 children: HashMap::new(),
                 suffix_link: None,
                 string_id: None,
                 data: HashMap::new(),
-                parent: Some(0),
+                parent: None,
                 end: Some(0),
                 start: 0
             })]),
             root: 0,
             terminal_character: terminal_character,
             strings: HashMap::new(),
-            // start_idx: 0,
             leaves: Vec::new(),
         }
     }
@@ -65,7 +77,7 @@ where
             suffix_link: None,
             string_id: None,
             data: HashMap::new(),
-            parent: Some(0),
+            parent: None,
             end: Some(0),
             start: 0
         })]);
@@ -137,7 +149,7 @@ where
                     i +=1;
                     c = &q_string[i];
                     let mut j = 1;
-                    while i < q_string.len() && j < self.get_node(n)?.edge_length(0){
+                    while i < q_string.len() && j < self.get_node(n)?.edge_length(&0){
                         if c != &self.get_string(self.get_node(n)?.get_string_id()?)?[self.get_node(n)?.get_start() + j]{
                             return None;
                         }
@@ -171,24 +183,24 @@ where
         }
     }
 
-    fn add_suffix_link(&mut self, node_id: usize, need_suffix_link: Option<usize>) -> Option<usize>{
+    fn add_suffix_link(&mut self, node_id: &usize, need_suffix_link: &mut Option<usize>){
         match need_suffix_link{
             None => (),
-            Some(i) => self.get_node_mut(&i)?.set_suffix_link(node_id),
+            Some(i) => self.get_node_mut(&i).unwrap().set_suffix_link(node_id.clone()),
         };
-        Some(node_id)
+        *need_suffix_link = Some(node_id.clone())
     }
 
-    fn walk_down(&mut self, next_node_id:usize, string:&Vec<T>, leaf_end:usize, mut active_length: usize, mut active_edge_index: usize, mut active_edge: Option<T>, mut active_node: usize)->(bool, usize, usize, Option<T>, usize){
-        let edge_length = self.get_node_mut(&next_node_id).unwrap().edge_length(leaf_end);
-        if active_length >= edge_length{
-            active_length -= edge_length;
-            active_edge_index += edge_length;
-            active_edge = Some(string[active_edge_index].clone());
-            active_node = next_node_id.clone();
-            return (true, active_length, active_edge_index, active_edge, active_node);
+    fn walk_down(&mut self, next_node_id:&usize, string:&Vec<T>, leaf_end:&usize, active_point: &mut ActivePoint<T>)->bool{
+        let edge_length = self.get_node_mut(next_node_id).unwrap().edge_length(leaf_end);
+        if active_point.active_length.clone() >= edge_length{
+            (*active_point).active_length -= edge_length;
+            (*active_point).active_edge_index += edge_length;
+            (*active_point).active_edge = Some(string[(*active_point).active_edge_index].clone());
+            (*active_point).active_node = next_node_id.clone();
+            return true;
         }
-        (false, active_length, active_edge_index, active_edge, active_node)
+        false
     }
 
     pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
@@ -200,27 +212,22 @@ where
 
         let string: &Vec<T> = &seq;
         let string_len: usize = seq.len()-1;
-        let mut i: usize = 0;
+        let mut curr_pos: usize = 0;
         let mut start_idx: usize = 0;
         let mut terminal_er3: bool = false;
         let mut need_suffix_link: Option<usize>;
         let mut remainder: usize = 0;
-        let mut active_length: usize = 0;
-        let mut active_edge_index: usize = 0;
-        let mut active_edge: Option<T> = None;
-        let mut active_node: usize = self.root.clone();
+        let mut active_point: ActivePoint<T> = ActivePoint::new();
         let mut string_leaves: Vec<usize> = Vec::new();
-        while i <= string_len {
-            let leaf_end = i;
+        while curr_pos <= string_len {
             need_suffix_link = None;
             remainder += 1;
             while remainder > 0{
-
-                if active_length == 0{
-                    active_edge_index = i;
-                    active_edge = Some(string[i].clone());
+                if active_point.active_length == 0{
+                    active_point.active_edge_index = curr_pos;
+                    active_point.active_edge = Some(string[curr_pos].clone());
                 }
-                let next_node = self.get_node(&active_node).unwrap().get_child(active_edge.as_ref().unwrap()).cloned();
+                let next_node = self.get_node(&active_point.active_node).unwrap().get_child(active_point.active_edge.as_ref().unwrap()).cloned();
                 match next_node{
                     None => {
                         let new_node: Node<T> = Node{
@@ -228,36 +235,36 @@ where
                             suffix_link: None,
                             string_id: Some(new_string_id.clone()),
                             data: HashMap::from([(new_string_id.clone(), vec![(start_idx.clone(), None)])]),
-                            parent: Some(active_node.clone()),
+                            parent: Some(active_point.active_node.clone()),
                             end: None,
                             start: start_idx.clone(),
                         };
                         let new_node_id = self.nodes.len();
-                        // println!("node_id: {}, node: {:#?}", &new_node_id, self.get_node(&new_node_id));
                         self.nodes.insert(new_node_id.clone(), new_node);
-                        self.get_node_mut(&active_node).unwrap().set_child(active_edge.clone().unwrap(), new_node_id);
+                        dbg!(need_suffix_link, curr_pos, active_point.active_node, next_node, new_node_id);
+                        self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
+                        dbg!(need_suffix_link, active_point.active_node);
+                        self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), new_node_id);
                         string_leaves.push(new_node_id.clone());
                         start_idx += 1;
-                        need_suffix_link = self.add_suffix_link(active_node.clone(), need_suffix_link);
                     },
                     Some(next_node_id) => {
-                        let walk_down = self.walk_down(next_node_id.clone(), string, leaf_end, active_length, active_edge_index, active_edge, active_node);
-                        (active_length, active_edge_index, active_edge, active_node) = (walk_down.1, walk_down.2, walk_down.3, walk_down.4);
-                        if walk_down.0{
+                        let walk_down = self.walk_down(&next_node_id, string, &curr_pos, &mut active_point);
+                        if walk_down{
                             continue;
                         }
-                        else if self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start() + active_length] == string[i]{
-                            if string[i] == self.terminal_character{
+                        else if self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length] == string[curr_pos]{
+                            if string[curr_pos] == self.terminal_character{
                                 self.get_node_mut(&next_node_id).unwrap().add_seq(new_string_id.clone(), start_idx.clone());
                                 start_idx += 1;
                                 if !terminal_er3{
-                                    need_suffix_link = self.add_suffix_link(active_node.clone(), need_suffix_link);
+                                    self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
                                     terminal_er3 = true;
                                 }
                             }
                             else{
-                                active_length += 1;
-                                need_suffix_link = self.add_suffix_link(active_node.clone(), need_suffix_link);
+                                active_point.active_length += 1;
+                                self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
                                 break;
                             }
                         }
@@ -274,45 +281,42 @@ where
                             let leaf_node_id = self.nodes.len();
                             self.nodes.insert(leaf_node_id.clone(), leaf_node);
                             string_leaves.push(leaf_node_id);
-                            // println!("split_node_parent_id: {}, split_node_id: {}", &leaf_node_id, &split_node_id);
                             let split_node:Node<T> = Node{
                                 children: HashMap::from([
-                                    (string[i].clone(), leaf_node_id.clone()),
+                                    (string[curr_pos].clone(), leaf_node_id.clone()),
                                     (self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start().clone()].clone(), next_node_id.clone())
                                     ]),
                                 suffix_link: None,
                                 string_id: self.get_node(&next_node_id).unwrap().get_string_id().cloned(),
                                 data: HashMap::from([(self.get_node(&next_node_id).unwrap().get_string_id().cloned().unwrap(), vec![(start_idx.clone(), None)])]),
-                                parent: Some(active_node.clone()),
-                                end: Some(self.get_node(&next_node_id).unwrap().get_start().clone() + active_length - 1),
+                                parent: Some(active_point.active_node.clone()),
+                                end: Some(self.get_node(&next_node_id).unwrap().get_start().clone() + active_point.active_length - 1),
                                 start: self.get_node(&next_node_id).unwrap().get_start().clone(),
                             };
                             let split_node_id = self.nodes.len();
                             self.nodes.insert(split_node_id.clone(), split_node);
-                            self.get_node_mut(&active_node).unwrap().set_child(active_edge.clone().unwrap(), split_node_id);
+                            self.add_suffix_link(&split_node_id, &mut need_suffix_link);
+                            self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), split_node_id);
                             start_idx += 1;
-                            let tmp_start = self.get_node(&next_node_id).unwrap().get_start() + active_length;
-                            // println!("old_start: {}, new_start: {}", self.get_node_mut(&next_node_id).unwrap().get_start(), &tmp_start);
+                            let tmp_start = self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length;
                             self.get_node_mut(&next_node_id).unwrap().set_start(tmp_start);
                             // let tmp_char = self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start().clone()].clone();
                             // self.get_node_mut(&split_node_id).unwrap().set_child(tmp_char, next_node_id.clone());
-                            need_suffix_link = self.add_suffix_link(split_node_id, need_suffix_link);
                         }
                     },
                 };
-                if active_node.clone() == self.root && active_length > 0{
-                    active_edge_index += 1;
-                    active_edge = Some(string[active_edge_index].clone());
-                    active_length -= 1;
+                if active_point.active_node.clone() == self.root && active_point.active_length > 0{
+                    active_point.active_edge_index += 1;
+                    active_point.active_edge = Some(string[active_point.active_edge_index].clone());
+                    active_point.active_length -= 1;
                 }
-                else if active_node.clone() != self.root{
-                    // println!("active_node_id: {}, active_node: {:#?}", active_node, self.get_node(&active_node).unwrap());
-                    active_node = self.get_node(&active_node).unwrap().get_suffix_link().unwrap();
+                else if active_point.active_node.clone() != self.root{
+                    active_point.active_node = self.get_node(&active_point.active_node).unwrap().get_suffix_link().unwrap();
                 }
                     
                 remainder -= 1
             }
-            i +=1;
+            curr_pos +=1;
         }
 
         for leaf in string_leaves.iter(){
