@@ -60,10 +60,8 @@ fn add_string_set(){
     let id_set:Vec<String> = vec!["first".to_string(),"second".to_string()];
     let it = string_set.iter().zip(id_set.iter());
     for (string,id) in it{
-        // println!("{}, {:#?}", id, string);
         tree.add_string(string.clone(), id.clone());
     }
-    println!("{:#?}", tree.get_node(tree.get_root().get_child(&'G').unwrap()));
     assert_eq!(tree.find(&"XYZ".to_string().chars().collect()).into_iter().map(|(treeitem, idxs)| {(treeitem.get_id(), idxs)}).collect::<Vec<(&String, Vec<usize>)>>(), vec![(&"first".to_string(), vec![14])]);
 }
 
