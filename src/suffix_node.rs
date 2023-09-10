@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::option::Option;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, PartialEq)]
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Node<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
