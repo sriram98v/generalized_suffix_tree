@@ -4,6 +4,8 @@ use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::option::Option;
+use serde::{Serialize, Deserialize};
+
 
 #[derive(Debug)]
 struct ActivePoint<T>
@@ -32,7 +34,7 @@ where
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct KGST<T, U>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
@@ -41,7 +43,7 @@ where
     root: usize,
     nodes: HashMap<usize, Node<T>>,
     terminal_character: T,
-    strings: HashMap<usize, TreeItem<T, U>>,
+    strings: HashMap<usize, (TreeItem<T, U>, Option<usize>)>,
     leaves: Vec<usize>,
 }
 
@@ -97,7 +99,7 @@ where
         }   
     }
 
-    pub fn get_strings(&self)->&HashMap<usize, TreeItem<T, U>>{
+    pub fn get_strings(&self)->&HashMap<usize, (TreeItem<T, U>, Option<usize>)>{
         &self.strings
     }
 
@@ -116,14 +118,14 @@ where
     pub fn get_string_id(&self, treeitem_id: &usize)->Option<&U>{
         match self.strings.get(treeitem_id){
             None => None,
-            Some(treeitem) => Some(treeitem.get_id())
+            Some(treeitem) => Some(treeitem.0.get_id())
         }
     }
 
     pub fn get_string(&self, treeitem_id: &usize)->Option<&Vec<T>>{
         match self.strings.get(treeitem_id){
             None => None,
-            Some(treeitem) => Some(treeitem.get_string())
+            Some(treeitem) => Some(treeitem.0.get_string())
         }
     }
 
@@ -131,7 +133,7 @@ where
         self.get_node(&0).unwrap()
     }
 
-    pub fn get_treeitem(&self, treeitem_id: &usize)->Option<&TreeItem<T, U>>{
+    pub fn get_treeitem(&self, treeitem_id: &usize)->Option<&(TreeItem<T, U>, Option<usize>)>{
         self.strings.get(treeitem_id)
     }
 
@@ -176,7 +178,7 @@ where
                 let mut ids_and_indexes: Vec<(&TreeItem<T, U>, Vec<usize>)> = Vec::new();
                 for leaf in leaves{
                     for (treeitem_id, idx) in self.get_node(&leaf).unwrap().get_data(){
-                        ids_and_indexes.push((self.get_treeitem(&treeitem_id).unwrap(), idx.into_iter().map(|start| start.clone()).collect()));
+                        ids_and_indexes.push((&self.get_treeitem(&treeitem_id).unwrap().0, idx.into_iter().map(|start| start.clone()).collect()));
                     }
                 }
                 ids_and_indexes
@@ -204,12 +206,12 @@ where
         false
     }
 
-    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U){
+    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: Option<usize>){
         seq.push(self.terminal_character.clone());
 
         let new_string: TreeItem<T, U> = TreeItem::new(seq_id, seq.clone());
         let new_string_id: usize = self.strings.len();
-        self.strings.insert(new_string_id.clone(), new_string);
+        self.strings.insert(new_string_id.clone(), (new_string, max_depth.clone()));
 
         let string: &Vec<T> = &seq;
         let string_len: usize = seq.len()-1;
@@ -324,8 +326,12 @@ where
     }
 
     pub fn contains(&self, string_id: &U)->bool{
-        let string_ids: HashSet<&U> = self.strings.values().map(|x| x.get_id()).collect();
+        let string_ids: HashSet<&U> = self.strings.values().map(|x| x.0.get_id()).collect();
         string_ids.contains(string_id)
+    }
+
+    pub fn print_tree(&self){
+        todo!()
     }
     
 }
