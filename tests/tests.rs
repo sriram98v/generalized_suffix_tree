@@ -32,7 +32,7 @@ fn add_string_no_repeats(){
 #[test]
 fn add_string_repeats(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Hello".chars().collect();
+    let item_string:Vec<char> = "Hellxyz".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id.clone());
     let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
