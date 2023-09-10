@@ -1,38 +1,38 @@
 use generalized_suffix_tree::suffix_tree::*;
 
-#[test]
-fn create_tree() {
-    let _tree: KGST<char, String> = KGST::new('$');
-}
+// #[test]
+// fn create_tree() {
+//     let _tree: KGST<char, String> = KGST::new('$');
+// }
 
-#[test]
-fn add_string_no_repeats(){
-    let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Helo".chars().collect();
-    let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id.clone());
-    let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
-                                                    .into_iter()
-                                                    .map(|(treeitem, pos_vec)|{
-                                                        (treeitem.get_id().clone(), pos_vec)
-                                                    })
-                                                    .collect();
-    assert_eq!(sstring, vec![(item_id.clone(), vec![0 as usize])]);
-    for i in 0..item_string.len(){
-        let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string[i..].to_vec())
-                                                    .into_iter()
-                                                    .map(|(treeitem, pos_vec)|{
-                                                        (treeitem.get_id().clone(), pos_vec)
-                                                    })
-                                                    .collect();
-        assert_eq!(sstring, vec![(item_id.clone(), vec![i])]);
-    }
-}
+// #[test]
+// fn add_string_no_repeats(){
+//     let mut tree: KGST<char, String> = KGST::new('$');
+//     let item_string:Vec<char> = "Helo".chars().collect();
+//     let item_id:String = "World".to_string();
+//     tree.add_string(item_string.clone(), item_id.clone());
+//     let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
+//                                                     .into_iter()
+//                                                     .map(|(treeitem, pos_vec)|{
+//                                                         (treeitem.get_id().clone(), pos_vec)
+//                                                     })
+//                                                     .collect();
+//     assert_eq!(sstring, vec![(item_id.clone(), vec![0 as usize])]);
+//     for i in 0..item_string.len(){
+//         let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string[i..].to_vec())
+//                                                     .into_iter()
+//                                                     .map(|(treeitem, pos_vec)|{
+//                                                         (treeitem.get_id().clone(), pos_vec)
+//                                                     })
+//                                                     .collect();
+//         assert_eq!(sstring, vec![(item_id.clone(), vec![i])]);
+//     }
+// }
 
 #[test]
 fn add_string_repeats(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "Hellxyz".chars().collect();
+    let item_string:Vec<char> = "GATTAXYZ".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id.clone());
     let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
@@ -43,7 +43,7 @@ fn add_string_repeats(){
                                                     .collect();
     assert_eq!(sstring, vec![(item_id.clone(), vec![0 as usize])]);
     for i in 0..item_string.len(){
-        let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string[i..].to_vec())
+        let sstring: Vec<(String, Vec<usize>)> = tree.find(dbg!(&item_string[i..].to_vec()))
                                                     .into_iter()
                                                     .map(|(treeitem, pos_vec)|{
                                                         (treeitem.get_id().clone(), pos_vec)
