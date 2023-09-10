@@ -11,7 +11,7 @@ where
     pub children: HashMap<T, usize>,
     pub suffix_link: Option<usize>,
     pub string_id: Option<usize>,
-    pub data: HashMap<usize, Vec<(usize, Option<usize>)>>,
+    pub data: HashMap<usize, Vec<usize>>,
     pub parent: Option<usize>,
     pub end: Option<usize>,
     pub start: usize,
@@ -50,7 +50,7 @@ where
     }
 
     pub fn add_seq(&mut self, seq_id:usize, start:usize){
-        self.data.entry(seq_id).or_default().push((start, None));
+        self.data.entry(seq_id).or_default().push(start);
     }
 
     pub fn get_child(&self, child:&T)->Option<&usize>{
@@ -107,7 +107,7 @@ where
         &self.children
     }
 
-    pub fn get_data(&self)->HashMap<usize, Vec<(usize, Option<usize>)>>{
+    pub fn get_data(&self)->HashMap<usize, Vec<usize>>{
         self.data.clone()
     }
 }
