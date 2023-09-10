@@ -1,7 +1,8 @@
 use core::fmt::{Debug, self};
 use std::{fmt::Display, hash::Hash};
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub struct TreeItem<T, U>
 where
     T: Display + Debug + Eq + PartialEq + Hash,
