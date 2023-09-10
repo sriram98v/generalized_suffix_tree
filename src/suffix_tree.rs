@@ -193,11 +193,11 @@ where
     }
 
     fn walk_down(&mut self, next_node_id:&usize, string:&Vec<T>, leaf_end:&usize, active_point: &mut ActivePoint<T>)->bool{
-        let edge_length = self.get_node_mut(next_node_id).unwrap().edge_length(leaf_end);
+        let edge_length = self.get_node(next_node_id).unwrap().edge_length(leaf_end);
         if active_point.active_length.clone() >= edge_length{
             (*active_point).active_length -= edge_length;
             (*active_point).active_edge_index += edge_length;
-            (*active_point).active_edge = Some(string[(*active_point).active_edge_index].clone());
+            (*active_point).active_edge = Some(string[active_point.active_edge_index].clone());
             (*active_point).active_node = next_node_id.clone();
             return true;
         }
@@ -222,7 +222,7 @@ where
         let mut string_leaves: Vec<usize> = Vec::new();
         while curr_pos <= string_len {
             dbg!(curr_pos);
-            dbg!(self.nodes.len());
+            dbg!(&active_point.active_edge_index);
             need_suffix_link = None;
             remainder += 1;
             while remainder > 0{
