@@ -1,92 +1,97 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::option::Option;
-use std::rc::Rc;
 
-use crate::tree_item::TreeItem;
-
-#[derive(PartialEq)]
-pub struct Node<T, U>
+#[derive(Debug, PartialEq)]
+pub struct Node<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash,
-    U: Display + Debug + Eq + PartialEq + Hash,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    children: HashMap<T, Rc<RefCell<Node<T, U>>>>,
-    suffix_link: Option<Rc<RefCell<Node<T, U>>>>,
-    string_id: Option<Rc<TreeItem<T, U>>>,
-    data: HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>,
-    parent: Option<Rc<RefCell<Node<T, U>>>>,
-    end: Option<usize>,
-    start: usize,
+    pub children: HashMap<T, usize>,
+    pub suffix_link: Option<usize>,
+    pub string_id: Option<usize>,
+    pub data: HashMap<usize, Vec<usize>>,
+    pub parent: Option<usize>,
+    pub end: Option<usize>,
+    pub start: usize,
 }
 
-impl<T, U> Node<T, U>
+impl<T> Node<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash,
-    U: Display + Debug + Eq + PartialEq + Hash,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    pub fn new(start:usize, end: Option<usize>)-> Node<T, U>{
-        Node{
-            children: HashMap::new(),
-            suffix_link: None,
-            parent:None,
-            data: HashMap::new(),
-            string_id: None,
-            end,
-            start,
-        }
-    }
+    // pub fn new(start:usize, end: Option<usize>)-> Node<T, U>{
+    //     Node{
+    //         children: None,
+    //         suffix_link: None,
+    //         parent:None,
+    //         data: None,
+    //         string_id: None,
+    //         end,
+    //         start,
+    //     }
+    // }
 
-    pub fn add_parent(&mut self, parent: Rc<RefCell<Node<T, U>>>){
+    pub fn set_parent(&mut self, parent: usize){
         self.parent = Some(parent);
     }
 
-    pub fn set_suffix_link(&mut self, link_node:Rc<RefCell<Node<T, U>>>){
+    pub fn get_parent(&self)->Option<&usize>{
+        self.parent.as_ref()
+    }
+
+    pub fn set_suffix_link(&mut self, link_node:usize){
         self.suffix_link = Some(link_node);
     }
 
-    pub fn get_suffix_link(&self)->Option<Rc<RefCell<Node<T, U>>>>{
+    pub fn get_suffix_link(&self)->Option<usize>{
         self.suffix_link.clone()
     }
 
-    pub fn add_seq(&mut self, seq_id:Rc<TreeItem<T, U>>, start:usize){
-        self.data.entry(seq_id).or_default().push((start, None));
+    pub fn add_seq(&mut self, seq_id:usize, start:usize){
+        self.data.entry(seq_id).or_default().push(start);
     }
 
-    pub fn get_child(&self, child:&T)->Option<Rc<RefCell<Node<T, U>>>>{
-        self.children.get(child).cloned()
+    pub fn get_child(&self, child:&T)->Option<&usize>{
+        self.children.get(child)
+    }
+
+    pub fn get_child_mut(&mut self, child:&T)->Option<&mut usize>{
+        self.children.get_mut(child)
     }
     
-    pub fn set_child(&mut self, edge:T, child:Rc<RefCell<Node<T, U>>>){
+    pub fn set_child(&mut self, edge:T, child:usize){
         self.children.insert(edge, child);
+        // self.children.insert(edge, child);
     }
 
     pub fn set_end(&mut self, end:usize){
         self.end = Some(end);
     }
 
-    pub fn get_end(&self, default_end:usize)->usize{
+    pub fn get_end(&self, default_end:&usize)->usize{
+        // println!("end: {:?}, self: {:?}", self.end, self);
         match self.end{
-            None => default_end,
+            None => default_end.clone(),
             Some(x) => x,
         }
     }
 
-    pub fn edge_length(&self, default_end:usize)-> usize{
-        self.get_end(default_end) + 1 - self.start
+    pub fn edge_length(&self, default_end:&usize)-> usize{
+        // println!("{}, {}, {}", self.get_end(default_end), 1, self.get_start());
+        self.get_end(default_end) + 1 - self.get_start()
     }
 
-    pub fn get_string_id(&self)->Option<Rc<TreeItem<T, U>>>{
-        self.string_id.clone()
+    pub fn get_string_id(&self)->Option<&usize>{
+        self.string_id.as_ref()
     }
 
     pub fn get_start(&self)->&usize{
         &self.start
     }
 
-    pub fn set_string_id(&mut self, string_id:Rc<TreeItem<T, U>>){
+    pub fn set_string_id(&mut self, string_id:usize){
         self.string_id = Some(string_id);
     }
 
@@ -98,19 +103,25 @@ where
         !self.children.is_empty()
     }
 
-    pub fn get_children(&self)->&HashMap<T, Rc<RefCell<Node<T, U>>>>{
+    pub fn get_children(&self)->&HashMap<T, usize>{
         &self.children
     }
 
-    pub fn get_data(&self)->&HashMap<Rc<TreeItem<T, U>>, Vec<(usize, Option<usize>)>>{
-        &self.data
+    pub fn get_data(&self)->HashMap<usize, Vec<usize>>{
+        self.data.clone()
     }
 }
 
-impl<T, U> Drop for Node<T, U>
-where
-    T: Display + Debug + Eq + PartialEq + Hash,
-    U: Display + Debug + Eq + PartialEq + Hash,
-{
-    fn drop(&mut self) { }
-}
+// impl<T, U> Drop for Node<T, U>
+// where
+//     T: Display + Debug + Eq + PartialEq + Hash + Clone,
+//     U: Display + Debug + Eq + PartialEq + Hash,
+// {
+//     fn drop(&mut self) {
+//         for (_key, mut value) in self.children.into_iter(){
+//             if let Some(mut next) = value.take(){
+//                 // value = next
+//             }
+//         }
+//     }
+// }
