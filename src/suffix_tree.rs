@@ -43,7 +43,7 @@ where
     root: usize,
     nodes: HashMap<usize, Node<T>>,
     terminal_character: T,
-    strings: HashMap<usize, (TreeItem<T, U>, Option<usize>)>,
+    strings: HashMap<usize, (TreeItem<T, U>, isize)>,
     leaves: Vec<usize>,
 }
 
@@ -96,7 +96,7 @@ where
         }   
     }
 
-    pub fn get_strings(&self)->&HashMap<usize, (TreeItem<T, U>, Option<usize>)>{
+    pub fn get_strings(&self)->&HashMap<usize, (TreeItem<T, U>, isize)>{
         &self.strings
     }
 
@@ -130,7 +130,7 @@ where
         self.get_node(&0).unwrap()
     }
 
-    pub fn get_treeitem(&self, treeitem_id: &usize)->Option<&(TreeItem<T, U>, Option<usize>)>{
+    pub fn get_treeitem(&self, treeitem_id: &usize)->Option<&(TreeItem<T, U>, isize)>{
         self.strings.get(treeitem_id)
     }
 
@@ -165,22 +165,45 @@ where
         }
     }
 
-    pub fn find(&self, s:&Vec<T>) -> Vec<(&TreeItem<T, U>, Vec<usize>)>{
+    pub fn find(&self, s:&Vec<T>) -> HashMap<U, HashSet<usize>>{
         let node = self.get_pattern_node(s);
         let mut leaves:Vec<usize> = Vec::new();
         match node{
-            None => Vec::new(),
+            None => HashMap::new(),
             Some(i) => {
                 self.leaves_of_node(&i, &mut leaves);
-                let mut ids_and_indexes: Vec<(&TreeItem<T, U>, Vec<usize>)> = Vec::new();
+                leaves.push(i.clone());
+                let mut ids_and_indexes: HashMap<usize, HashSet<usize>> = HashMap::new();
                 for leaf in leaves{
                     for (treeitem_id, idx) in self.get_node(&leaf).unwrap().get_data(){
-                        ids_and_indexes.push((&self.get_treeitem(&treeitem_id).unwrap().0, idx.into_iter().map(|start| start.clone()).collect()));
+                        match ids_and_indexes.get_mut(treeitem_id){
+                            None => {ids_and_indexes.insert(treeitem_id.clone(), idx.clone());},
+                            Some(idxs) => {
+                                for i in idx.iter(){
+                                    idxs.insert(i.clone());
+                                }
+                            },
+                        }
                     }
                 }
-                ids_and_indexes
+                ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
             }
         }
+    }
+
+    pub fn get_node_parent(&self, node_id: &usize)->Option<&usize>{
+        self.get_node(node_id).unwrap().get_parent()
+    }
+
+    fn node_depth(&self, node_id: &usize, depth: usize)->usize{
+        match self.get_node(node_id).unwrap().get_parent(){
+            None => return depth,
+            Some(i) => return self.node_depth(i, depth+self.get_node(node_id).unwrap().edge_length(&0))
+        };
+    }
+
+    pub fn get_node_depth(&self, node_id: &usize)->usize{
+        self.node_depth(node_id, 0)
     }
 
     fn add_suffix_link(&mut self, node_id: &usize, need_suffix_link: &mut Option<usize>){
@@ -193,7 +216,7 @@ where
 
     fn walk_down(&mut self, next_node_id:&usize, string:&Vec<T>, leaf_end:&usize, active_point: &mut ActivePoint<T>)->bool{
         let edge_length = self.get_node(next_node_id).unwrap().edge_length(leaf_end);
-        if active_point.active_length.clone() >= edge_length{
+        if active_point.active_length >= edge_length{
             (*active_point).active_length -= edge_length;
             (*active_point).active_edge_index += edge_length;
             (*active_point).active_edge = Some(string[active_point.active_edge_index].clone());
@@ -205,6 +228,10 @@ where
 
     pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: Option<usize>){
         seq.push(self.terminal_character.clone());
+        let max_depth: isize = match max_depth {
+            None=>0,
+            Some(i)=>i as isize,
+        };
 
         let new_string: TreeItem<T, U> = TreeItem::new(seq_id, seq.clone());
         let new_string_id: usize = self.strings.len();
@@ -223,6 +250,7 @@ where
             need_suffix_link = None;
             remainder += 1;
             while remainder > 0{
+                // dbg!(&active_point);
                 if active_point.active_length == 0{
                     active_point.active_edge_index = curr_pos;
                     active_point.active_edge = Some(string[curr_pos].clone());
@@ -234,7 +262,7 @@ where
                             children: HashMap::new(),
                             suffix_link: None,
                             string_id: Some(new_string_id.clone()),
-                            data: HashMap::from([(new_string_id.clone(), vec![(start_idx.clone())])]),
+                            data: HashMap::from([(new_string_id.clone(), HashSet::from([(start_idx.clone())]))]),
                             parent: Some(active_point.active_node.clone()),
                             end: None,
                             start: start_idx.clone(),
@@ -249,6 +277,7 @@ where
                     Some(next_node_id) => {
                         let walk_down = self.walk_down(&next_node_id, string, &curr_pos, &mut active_point);
                         if walk_down{
+                            self.get_node_mut(&active_point.active_node).unwrap().add_seq(new_string_id, active_point.active_edge_index-1);
                             continue;
                         }
                         else if self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length] == string[curr_pos]{
@@ -268,14 +297,14 @@ where
                         }
                         else{
                             let leaf_node: Node<T> = Node{
-                                                        children: HashMap::new(),
-                                                        suffix_link: None,
-                                                        parent:None,
-                                                        data: HashMap::from([(new_string_id.clone(), vec![(start_idx.clone())])]),
-                                                        string_id: Some(new_string_id.clone()),
-                                                        end: None,
-                                                        start: curr_pos.clone(),
-                                                    };
+                                children: HashMap::new(),
+                                suffix_link: None,
+                                parent:Some(self.nodes.len()+1),
+                                data: HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
+                                string_id: Some(new_string_id),
+                                end: None,
+                                start: curr_pos.clone(),
+                            };
                             let leaf_node_id = self.nodes.len();
                             self.nodes.insert(leaf_node_id.clone(), leaf_node);
                             string_leaves.push(leaf_node_id);
@@ -286,18 +315,29 @@ where
                                     ]),
                                 suffix_link: None,
                                 string_id: self.get_node(&next_node_id).unwrap().get_string_id().cloned(),
-                                data: HashMap::from([(self.get_node(&next_node_id).unwrap().get_string_id().cloned().unwrap(), vec![(start_idx.clone())])]),
+                                data: HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
                                 parent: Some(active_point.active_node.clone()),
                                 end: Some(self.get_node(&next_node_id).unwrap().get_start().clone() + active_point.active_length - 1),
                                 start: self.get_node(&next_node_id).unwrap().get_start().clone(),
                             };
                             let split_node_id = self.nodes.len();
                             self.nodes.insert(split_node_id.clone(), split_node);
+                            let next_node_data = self.get_node(&next_node_id).unwrap().get_data().clone();
+                            self.get_node_mut(&split_node_id).unwrap().append_data(next_node_data);
                             self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), split_node_id);
                             start_idx += 1;
                             let tmp_start = self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length;
-                            self.get_node_mut(&next_node_id).unwrap().set_start(tmp_start);
+                            self.get_node_mut(&next_node_id).unwrap().set_start(tmp_start, &new_string_id);
+                            self.get_node_mut(&next_node_id).unwrap().set_parent(split_node_id.clone());
+                            // let old_data = self.get_node(&split_node_id).unwrap().get_data().clone();
+                            // self.get_node_mut(&active_point.active_node).unwrap().append_data(old_data);
                             self.add_suffix_link(&split_node_id, &mut need_suffix_link);
+                            // match self.get_node_depth(&active_point.active_node)+active_point.active_length>=(max_depth as usize){
+                            //     true =>{},
+                            //     false =>{
+                                    
+                            //     }
+                            // };
                         }
                     },
                 };
@@ -307,6 +347,7 @@ where
                     active_point.active_length -= 1;
                 }
                 else if active_point.active_node != self.root{
+                    self.get_node_mut(&active_point.active_node).unwrap().add_seq(new_string_id, active_point.active_edge_index-1);
                     active_point.active_node = self.get_node(&active_point.active_node).unwrap().get_suffix_link().unwrap().clone();
                 }
                 remainder -= 1
@@ -315,7 +356,11 @@ where
         }
 
         for leaf in string_leaves.iter(){
-            self.get_node_mut(leaf).unwrap().set_end(string.len() - 1);
+            // let leaf_end = self.get_node(leaf).unwrap().get_start()+((max_depth as usize)-self.get_node_depth(self.get_node_parent(leaf).unwrap()));
+            self.get_node_mut(leaf).unwrap().set_end(match max_depth {
+                                                                            -1 => string.len(),
+                                                                            _ => string.len(),
+                                                                            } - 1);
         }
         string_leaves.clear();
         

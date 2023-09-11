@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::option::Option;
@@ -13,7 +13,7 @@ where
     pub children: HashMap<T, usize>,
     pub suffix_link: Option<usize>,
     pub string_id: Option<usize>,
-    pub data: HashMap<usize, Vec<usize>>,
+    pub data: HashMap<usize, HashSet<usize>>,
     pub parent: Option<usize>,
     pub end: Option<usize>,
     pub start: usize,
@@ -51,8 +51,27 @@ where
         self.suffix_link.as_ref()
     }
 
+    pub fn append_data(&mut self, data: HashMap<usize, HashSet<usize>>){
+        for (k,v) in data.iter(){
+            match self.data.get_mut(k) {
+                None => {self.data.insert(k.clone(), v.clone());},
+                Some(old_v) => {for i in v.iter(){
+                    old_v.insert(i.clone());
+                }},
+            }
+        };
+    }
+
     pub fn add_seq(&mut self, seq_id:usize, start:usize){
-        self.data.entry(seq_id).or_default().push(start);
+        match self.data.get_mut(&seq_id){
+            None => {self.data.insert(seq_id, HashSet::from([start]));},
+            Some(i) => {
+                match i.contains(&start){
+                    false => {i.insert(start);},
+                    true => {},
+                };
+            }
+        };
     }
 
     pub fn get_child(&self, child:&T)->Option<&usize>{
@@ -94,8 +113,16 @@ where
         self.string_id = Some(string_id);
     }
 
-    pub fn set_start(&mut self, new_start:usize){
+    pub fn set_start(&mut self, new_start:usize, string_id: &usize){
+        for (k, v) in self.data.iter_mut(){
+            if k==string_id{
+                if v.remove(&self.start){
+                    v.insert(new_start);
+                }
+            }
+        }
         self.start = new_start;
+
     }
 
     pub fn has_children(&self)->bool{
@@ -106,7 +133,7 @@ where
         &self.children
     }
 
-    pub fn get_data(&self)->&HashMap<usize, Vec<usize>>{
+    pub fn get_data(&self)->&HashMap<usize, HashSet<usize>>{
         &self.data
     }
 }
