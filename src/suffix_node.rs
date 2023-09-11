@@ -114,13 +114,13 @@ where
     }
 
     pub fn set_start(&mut self, new_start:usize, string_id: &usize){
-        for (k, v) in self.data.iter_mut(){
-            if k==string_id{
-                if v.remove(&self.start){
-                    v.insert(new_start);
-                }
-            }
-        }
+        // for (k, v) in self.data.iter_mut(){
+        //     if k==string_id{
+        //         if v.remove(&self.start){
+        //             v.insert(new_start);
+        //         }
+        //     }
+        // }
         self.start = new_start;
 
     }
