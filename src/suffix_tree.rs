@@ -139,26 +139,17 @@ where
         let mut c: &T = &q_string[0];
         let mut i = 0;
         loop {
-            node_id = self.nodes.get(node_id.unwrap()).unwrap().get_child(c);
+            node_id = self.get_node(node_id.unwrap()).unwrap().get_child(c);
             match node_id{
                 None => return None,
                 Some(n) => {
-                    if i==q_string.len()-1{
-                        return Some(n);
-                    }
-                    i +=1;
-                    c = &q_string[i];
-                    let mut j = 1;
-                    while i < q_string.len() && j < self.get_node(n)?.edge_length(&0){
-                        if c != &self.get_string(self.get_node(n)?.get_string_id()?)?[self.get_node(n)?.get_start() + j]{
-                            return None;
-                        }
-                        if i==q_string.len()-1{
-                            return Some(n);
-                        }
-                        i += 1;
-                        j += 1;
+                    if q_string.len()-i>=self.get_node(n).unwrap().edge_length(&0){
+                        i += self.get_node(n).unwrap().edge_length(&0);
                         c = &q_string[i];
+                        node_id = Some(n);
+                    }
+                    else{
+                        return Some(n);
                     }
                 },
             }
