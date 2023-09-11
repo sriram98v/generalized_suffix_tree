@@ -72,9 +72,7 @@ where
     }
 
     pub fn clear(&mut self){
-        // self.num_nodes = 1;
         self.root = 0;
-        // self.num_nodes = 1;
         self.nodes = HashMap::from([(0, Node{
             children: HashMap::new(),
             suffix_link: None,
@@ -85,7 +83,6 @@ where
             start: 0
         })]);
         self.strings = HashMap::new();
-        // self.start_idx = 0;
         self.leaves = Vec::new();
     }
 
@@ -223,7 +220,6 @@ where
         let mut active_point: ActivePoint<T> = ActivePoint::new();
         let mut string_leaves: Vec<usize> = Vec::new();
         while curr_pos <= string_len {
-            // dbg!(self.get_root());
             need_suffix_link = None;
             remainder += 1;
             while remainder > 0{
@@ -311,7 +307,7 @@ where
                     active_point.active_length -= 1;
                 }
                 else if active_point.active_node != self.root{
-                    active_point.active_node = self.get_node(&active_point.active_node).unwrap().get_suffix_link().unwrap();
+                    active_point.active_node = self.get_node(&active_point.active_node).unwrap().get_suffix_link().unwrap().clone();
                 }
                 remainder -= 1
             }
