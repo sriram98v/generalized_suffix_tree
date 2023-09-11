@@ -143,7 +143,7 @@ where
             match node_id{
                 None => return None,
                 Some(n) => {
-                    if q_string.len()-i>=self.get_node(n).unwrap().edge_length(&0){
+                    if q_string.len()-1-i>=self.get_node(n).unwrap().edge_length(&0){
                         i += self.get_node(n).unwrap().edge_length(&0);
                         c = &q_string[i];
                         node_id = Some(n);

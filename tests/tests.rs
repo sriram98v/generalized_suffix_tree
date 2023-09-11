@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-
+use std::collections::{HashSet, HashMap};
 use generalized_suffix_tree::suffix_tree::*;
 
 #[test]
@@ -13,21 +12,11 @@ fn add_string_no_repeats(){
     let item_string:Vec<char> = "Helo".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id.clone(), None);
-    let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
-                                                    .into_iter()
-                                                    .map(|(treeitem, pos_vec)|{
-                                                        (treeitem.get_id().clone(), pos_vec)
-                                                    })
-                                                    .collect();
-    assert_eq!(sstring, vec![(item_id.clone(), vec![0 as usize])]);
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
+    assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
     for i in 0..item_string.len(){
-        let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string[i..].to_vec())
-                                                    .into_iter()
-                                                    .map(|(treeitem, pos_vec)|{
-                                                        (treeitem.get_id().clone(), pos_vec)
-                                                    })
-                                                    .collect();
-        assert_eq!(sstring, vec![(item_id.clone(), vec![i])]);
+        let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string[i..].to_vec());
+        assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([i]))]));
     }
 }
 
@@ -37,21 +26,11 @@ fn add_string_repeats(){
     let item_string:Vec<char> = "GATTAXYZ".chars().collect();
     let item_id:String = "World".to_string();
     tree.add_string(item_string.clone(), item_id.clone(), None);
-    let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string)
-                                                    .into_iter()
-                                                    .map(|(treeitem, pos_vec)|{
-                                                        (treeitem.get_id().clone(), pos_vec)
-                                                    })
-                                                    .collect();
-    assert_eq!(sstring, vec![(item_id.clone(), vec![0 as usize])]);
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
+    assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
     for i in 0..item_string.len(){
-        let sstring: Vec<(String, Vec<usize>)> = tree.find(&item_string[i..].to_vec())
-                                                    .into_iter()
-                                                    .map(|(treeitem, pos_vec)|{
-                                                        (treeitem.get_id().clone(), pos_vec)
-                                                    })
-                                                    .collect();
-        assert_eq!(sstring, vec![(item_id.clone(), vec![i])]);
+        let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string[i..].to_vec());
+        assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([i]))]));
     }
 }
 
@@ -64,7 +43,8 @@ fn add_string_set(){
     for (string,id) in it{
         tree.add_string(string.clone(), id.clone(), None);
     }
-    assert_eq!(tree.find(&"XYZ".to_string().chars().collect()).into_iter().map(|(treeitem, idxs)| {(treeitem.get_id(), idxs)}).collect::<HashSet<(&String, Vec<usize>)>>(), HashSet::from([(&"first".to_string(), vec![14]), (&"second".to_string(), vec![0])]));
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect());
+    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([0]))]));
 }
 
 #[test]
