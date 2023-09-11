@@ -47,8 +47,8 @@ where
         self.suffix_link = Some(link_node);
     }
 
-    pub fn get_suffix_link(&self)->Option<usize>{
-        self.suffix_link.clone()
+    pub fn get_suffix_link(&self)->Option<&usize>{
+        self.suffix_link.as_ref()
     }
 
     pub fn add_seq(&mut self, seq_id:usize, start:usize){
@@ -65,7 +65,6 @@ where
     
     pub fn set_child(&mut self, edge:T, child:usize){
         self.children.insert(edge, child);
-        // self.children.insert(edge, child);
     }
 
     pub fn set_end(&mut self, end:usize){
@@ -73,7 +72,6 @@ where
     }
 
     pub fn get_end(&self, default_end:&usize)->usize{
-        // println!("end: {:?}, self: {:?}", self.end, self);
         match self.end{
             None => default_end.clone(),
             Some(x) => x,
@@ -81,7 +79,6 @@ where
     }
 
     pub fn edge_length(&self, default_end:&usize)-> usize{
-        // println!("{}, {}, {}", self.get_end(default_end), 1, self.get_start());
         self.get_end(default_end) + 1 - self.get_start()
     }
 
@@ -109,21 +106,7 @@ where
         &self.children
     }
 
-    pub fn get_data(&self)->HashMap<usize, Vec<usize>>{
-        self.data.clone()
+    pub fn get_data(&self)->&HashMap<usize, Vec<usize>>{
+        &self.data
     }
 }
-
-// impl<T, U> Drop for Node<T, U>
-// where
-//     T: Display + Debug + Eq + PartialEq + Hash + Clone,
-//     U: Display + Debug + Eq + PartialEq + Hash,
-// {
-//     fn drop(&mut self) {
-//         for (_key, mut value) in self.children.into_iter(){
-//             if let Some(mut next) = value.take(){
-//                 // value = next
-//             }
-//         }
-//     }
-// }
