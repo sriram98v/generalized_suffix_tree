@@ -15,7 +15,7 @@ where
     pub string_id: Option<usize>,
     pub data: HashMap<usize, HashSet<usize>>,
     pub parent: Option<usize>,
-    pub end: Option<usize>,
+    pub edge_length: Option<usize>,
     pub start: usize,
 }
 
@@ -23,18 +23,6 @@ impl<T> Node<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    // pub fn new(start:usize, end: Option<usize>)-> Node<T, U>{
-    //     Node{
-    //         children: None,
-    //         suffix_link: None,
-    //         parent:None,
-    //         data: None,
-    //         string_id: None,
-    //         end,
-    //         start,
-    //     }
-    // }
-
     pub fn set_parent(&mut self, parent: usize){
         self.parent = Some(parent);
     }
@@ -86,19 +74,22 @@ where
         self.children.insert(edge, child);
     }
 
-    pub fn set_end(&mut self, end:usize){
-        self.end = Some(end);
+    pub fn set_edge_length(&mut self, edge_length:usize){
+        self.edge_length = Some(edge_length);
     }
 
     pub fn get_end(&self, default_end:&usize)->usize{
-        match self.end{
+        match self.edge_length{
             None => default_end.clone(),
-            Some(x) => x,
+            Some(x) => &self.start + x - 1,
         }
     }
 
-    pub fn edge_length(&self, default_end:&usize)-> usize{
-        self.get_end(default_end) + 1 - self.get_start()
+    pub fn get_edge_length(&self, leaf_end: &usize)-> usize{
+        match self.edge_length{
+            None => leaf_end.clone(),
+            Some(e) => e,
+        }
     }
 
     pub fn get_string_id(&self)->Option<&usize>{
@@ -113,14 +104,7 @@ where
         self.string_id = Some(string_id);
     }
 
-    pub fn set_start(&mut self, new_start:usize, string_id: &usize){
-        // for (k, v) in self.data.iter_mut(){
-        //     if k==string_id{
-        //         if v.remove(&self.start){
-        //             v.insert(new_start);
-        //         }
-        //     }
-        // }
+    pub fn set_start(&mut self, new_start:usize){
         self.start = new_start;
 
     }
