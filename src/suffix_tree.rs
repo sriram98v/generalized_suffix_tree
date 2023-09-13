@@ -181,8 +181,15 @@ where
         }
     }
 
-    pub fn get_node_parent(&self, node_id: &usize)->Option<&usize>{
-        self.get_node(node_id).unwrap().get_parent()
+    pub fn get_node_parent(&self, node_id: &usize)->Option<&Node<T>>{
+        match self.get_node(node_id).unwrap().get_parent(){
+            None => None,
+            Some(parent_id) => self.get_node(parent_id)
+        }
+    }
+
+    pub fn get_node_parent_id(&self, node_id: usize)->Option<&usize>{
+        self.get_node(&node_id).unwrap().get_parent()
     }
 
     fn node_depth(&self, node_id: &usize, depth: usize)->usize{
@@ -194,6 +201,10 @@ where
 
     pub fn get_node_depth(&self, node_id: &usize)->usize{
         self.node_depth(node_id, 0)
+    }
+
+    pub fn get_node_start(&self, node_id: &usize)->&usize{
+        self.get_node(&node_id).unwrap().get_start()
     }
 
     fn add_suffix_link(&mut self, node_id: &usize, need_suffix_link: &mut Option<usize>){
@@ -222,6 +233,11 @@ where
         let new_string: TreeItem<T, U> = TreeItem::new(seq_id, seq.clone());
         let new_string_id: usize = self.strings.len();
         self.strings.insert(new_string_id.clone(), (new_string, max_depth.clone()));
+
+        let max_depth: isize = match max_depth{
+            None => -1,
+            Some(depth) => depth as isize,
+        };
 
         let string: &Vec<T> = &seq;
         let string_len: usize = seq.len()-1;
@@ -330,10 +346,11 @@ where
         }
 
         for leaf in string_leaves.iter(){
-            self.get_node_mut(leaf).unwrap().set_edge_length(match max_depth {
-                                                                            None => string.len()-1,
-                                                                            Some(_x) => string.len()-1,
-                                                                            });
+            let leaf_edge_length: usize = match max_depth {
+                -1 => string.len()-self.get_node_start(leaf).clone(),
+                _ => string.len()-1,
+            };
+            self.get_node_mut(leaf).unwrap().set_edge_length(leaf_edge_length);
         }
         string_leaves.clear();
         
