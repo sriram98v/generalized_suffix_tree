@@ -43,7 +43,7 @@ where
     root: usize,
     nodes: HashMap<usize, Node<T>>,
     terminal_character: T,
-    strings: HashMap<usize, (TreeItem<T, U>, Option<usize>)>,
+    strings: HashMap<usize, (TreeItem<T, U>, usize)>,
     leaves: Vec<usize>,
 }
 
@@ -96,7 +96,7 @@ where
         }   
     }
 
-    pub fn get_strings(&self)->&HashMap<usize, (TreeItem<T, U>, Option<usize>)>{
+    pub fn get_strings(&self)->&HashMap<usize, (TreeItem<T, U>, usize)>{
         &self.strings
     }
 
@@ -130,7 +130,7 @@ where
         self.get_node(&0).unwrap()
     }
 
-    pub fn get_treeitem(&self, treeitem_id: &usize)->Option<&(TreeItem<T, U>, Option<usize>)>{
+    pub fn get_treeitem(&self, treeitem_id: &usize)->Option<&(TreeItem<T, U>, usize)>{
         self.strings.get(treeitem_id)
     }
 
@@ -227,17 +227,12 @@ where
         false
     }
 
-    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: Option<usize>){
+    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: usize){
         seq.push(self.terminal_character.clone());
 
         let new_string: TreeItem<T, U> = TreeItem::new(seq_id, seq.clone());
         let new_string_id: usize = self.strings.len();
         self.strings.insert(new_string_id.clone(), (new_string, max_depth.clone()));
-
-        let max_depth: isize = match max_depth{
-            None => -1,
-            Some(depth) => depth as isize,
-        };
 
         let string: &Vec<T> = &seq;
         let string_len: usize = seq.len()-1;
@@ -259,6 +254,10 @@ where
                 let next_node = self.get_node(&active_point.active_node).unwrap().get_child(active_point.active_edge.as_ref().unwrap()).cloned();
                 match next_node{
                     None => {
+                        match self.get_node_depth(&active_point.active_node) + active_point.active_length<=max_depth{
+                            true => {},
+                            false => {},
+                        };
                         let new_node: Node<T> = Node{
                             children: HashMap::new(),
                             suffix_link: None,
@@ -347,8 +346,8 @@ where
 
         for leaf in string_leaves.iter(){
             let leaf_edge_length: usize = match max_depth {
-                -1 => string.len()-self.get_node_start(leaf).clone(),
-                _ => string.len()-1,
+                0 => string.len()-self.get_node_start(leaf).clone(),
+                _ => string.len()-self.get_node_start(leaf).clone(),
             };
             self.get_node_mut(leaf).unwrap().set_edge_length(leaf_edge_length);
         }

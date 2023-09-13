@@ -11,7 +11,7 @@ fn add_string_no_repeats(){
     let mut tree: KGST<char, String> = KGST::new('$');
     let item_string:Vec<char> = "Helo".chars().collect();
     let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id.clone(), None);
+    tree.add_string(item_string.clone(), item_id.clone(), 0);
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
     assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
     for i in 0..item_string.len(){
@@ -25,7 +25,7 @@ fn add_string_repeats(){
     let mut tree: KGST<char, String> = KGST::new('$');
     let item_string:Vec<char> = "GATTAXYZ".chars().collect();
     let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id.clone(), None);
+    tree.add_string(item_string.clone(), item_id.clone(), 0);
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
     assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
     for i in 0..item_string.len(){
@@ -41,7 +41,7 @@ fn add_string_set(){
     let id_set:Vec<String> = vec!["first".to_string(),"second".to_string()];
     let it = string_set.iter().zip(id_set.iter());
     for (string,id) in it{
-        tree.add_string(string.clone(), id.clone(), None);
+        tree.add_string(string.clone(), id.clone(), 0);
     }
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect());
     assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([0, 10]))]));
@@ -52,7 +52,7 @@ fn serialize_deserialize_tree(){
     let mut tree: KGST<char, String> = KGST::new('$');
     let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
     let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id.clone(), None);
+    tree.add_string(item_string.clone(), item_id.clone(), 0);
     let serialized = serde_json::to_string(&tree).unwrap();
     let tree_2: KGST<char, String> = serde_json::from_str(&serialized).unwrap();
     assert_eq!(tree.get_nodes(), tree_2.get_nodes());
