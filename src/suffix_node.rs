@@ -39,17 +39,6 @@ where
         self.suffix_link.as_ref()
     }
 
-    pub fn append_data(&mut self, data: HashMap<usize, HashSet<usize>>){
-        for (k,v) in data.iter(){
-            match self.data.get_mut(k) {
-                None => {self.data.insert(k.clone(), v.clone());},
-                Some(old_v) => {for i in v.iter(){
-                    old_v.insert(i.clone());
-                }},
-            }
-        };
-    }
-
     pub fn add_seq(&mut self, seq_id:usize, start:usize){
         match self.data.get_mut(&seq_id){
             None => {self.data.insert(seq_id, HashSet::from([start]));},
