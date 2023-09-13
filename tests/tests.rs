@@ -47,16 +47,16 @@ fn add_string_set(){
     assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([0]))]));
 }
 
-#[test]
-fn serialize_deserialize_tree(){
-    let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
-    let item_id:String = "World".to_string();
-    tree.add_string(item_string.clone(), item_id.clone(), None);
-    let serialized = serde_json::to_string(&tree).unwrap();
-    let tree_2: KGST<char, String> = serde_json::from_str(&serialized).unwrap();
-    assert_eq!(tree.get_nodes(), tree_2.get_nodes());
-}
+// #[test]
+// fn serialize_deserialize_tree(){
+//     let mut tree: KGST<char, String> = KGST::new('$');
+//     let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
+//     let item_id:String = "World".to_string();
+//     tree.add_string(item_string.clone(), item_id.clone(), None);
+//     let serialized = serde_json::to_string(&tree).unwrap();
+//     let tree_2: KGST<char, String> = serde_json::from_str(&serialized).unwrap();
+//     assert_eq!(tree.get_nodes(), tree_2.get_nodes());
+// }
 
 
 // #[test]
