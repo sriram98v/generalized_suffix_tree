@@ -117,7 +117,18 @@ where
     }
 
     pub fn is_leaf(&self, node_id: &usize)->bool{
-        !self.get_node(node_id).unwrap().has_children()
+        (!self.get_node(node_id).unwrap().has_children()) && (self.get_node_parent_id(node_id)!=None)
+    }
+
+    pub fn get_node_string(&self, node_id: &usize)->Option<&Vec<T>>{
+        match self.get_node_string_id(node_id){
+            None => None,
+            Some(i) => self.get_string(i)
+        }
+    }
+
+    pub fn get_node_string_id(&self, node_id: &usize)->Option<&usize>{
+        self.get_node(node_id).unwrap().get_string_id()
     }
     
     fn set_suffix_link(&mut self, node_id: &usize, suffix_link_node_id: &usize){
@@ -162,7 +173,7 @@ where
             match node_id{
                 None => return None,
                 Some(n) => {
-                    if q_string.len()-1-i>i+self.get_node(n).unwrap().get_edge_length(&0){
+                    if q_string.len()-1-i>=i+self.get_node(n).unwrap().get_edge_length(&0){
                         i += self.get_node(n).unwrap().get_edge_length(&0);
                         c = &q_string[i];
                         node_id = Some(n);
@@ -177,10 +188,10 @@ where
 
     pub fn find(&self, s:&Vec<T>) -> HashMap<U, HashSet<usize>>{
         let node = self.get_pattern_node(s);
-        let mut leaves:Vec<usize> = Vec::new();
-        match node{
+        match dbg!(node){
             None => HashMap::new(),
             Some(i) => {
+                let mut leaves:Vec<usize> = vec![];
                 self.leaves_of_node(&i, &mut leaves);
                 let mut ids_and_indexes: HashMap<usize, HashSet<usize>> = HashMap::new();
                 for leaf in leaves{
@@ -207,8 +218,8 @@ where
         }
     }
 
-    pub fn get_node_parent_id(&self, node_id: usize)->Option<&usize>{
-        self.get_node(&node_id).unwrap().get_parent()
+    pub fn get_node_parent_id(&self, node_id: &usize)->Option<&usize>{
+        self.get_node(node_id).unwrap().get_parent()
     }
 
     fn node_depth(&self, node_id: &usize, depth: usize)->usize{
@@ -277,25 +288,35 @@ where
                 let next_node = self.get_node(&active_point.active_node).unwrap().get_child(active_point.active_edge.as_ref().unwrap()).cloned();
                 match next_node{
                     None => {
-                        match self.get_node_depth(&active_point.active_node) + active_point.active_length<max_depth{
-                            true => {
-                                let new_node: Node<T> = Node{
-                                    children: HashMap::new(),
-                                    suffix_link: None,
-                                    string_id: Some(new_string_id.clone()),
-                                    data: HashMap::from([(new_string_id.clone(), HashSet::from([(start_idx.clone())]))]),
-                                    parent: Some(active_point.active_node.clone()),
-                                    edge_length: None,
-                                    start: start_idx.clone(),
-                                };
-                                let new_node_id = self.nodes.len();
-                                self.nodes.insert(new_node_id.clone(), new_node);
-                                self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
-                                self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), new_node_id);
-                                string_leaves.push(new_node_id.clone());
-                            },
+                        match self.is_leaf(&active_point.active_node){
                             false => {
-                                self.get_node_mut(&active_point.active_node).unwrap().add_seq(new_string_id.clone(), active_point.active_edge_index-max_depth);
+                                if self.get_node_depth(&active_point.active_node)<max_depth{
+                                    let new_node: Node<T> = Node{
+                                        children: HashMap::new(),
+                                        suffix_link: None,
+                                        string_id: Some(new_string_id.clone()),
+                                        data: HashMap::from([(new_string_id.clone(), HashSet::from([(start_idx.clone())]))]),
+                                        parent: Some(active_point.active_node.clone()),
+                                        edge_length: None,
+                                        start: start_idx.clone(),
+                                    };
+                                    let new_node_id = self.nodes.len();
+                                    self.nodes.insert(new_node_id.clone(), new_node);
+                                    self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
+                                    self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), new_node_id);
+                                    string_leaves.push(new_node_id.clone());
+                                }
+                            },
+                            true => {
+                                match active_point.active_length==0{
+                                    true => {
+                                        let active_node_depth = self.get_node_depth(&active_point.active_node);
+                                        self.get_node_mut(&active_point.active_node).unwrap().add_seq(new_string_id.clone(), active_point.active_edge_index-active_node_depth);
+                                    },
+                                    false => {
+                                        break;
+                                    },
+                                }
                             },
                         };
                         start_idx += 1;
@@ -305,7 +326,7 @@ where
                         if walk_down{
                             continue;
                         }
-                        else if self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length] == string[curr_pos]{
+                        else if self.get_node_string(&next_node_id).unwrap()[self.get_node_start(&next_node_id) + active_point.active_length] == string[curr_pos]{
                             if string[curr_pos] == self.terminal_character{
                                 self.get_node_mut(&next_node_id).unwrap().add_seq(new_string_id.clone(), start_idx.clone());
                                 start_idx += 1;
@@ -321,42 +342,60 @@ where
                             }
                         }
                         else{
-                            match self.get_node_depth(&active_point.active_node) + active_point.active_length<=max_depth{
-                                true => {
-                                    let leaf_node: Node<T> = Node{
-                                        children: HashMap::new(),
-                                        suffix_link: None,
-                                        parent:Some(self.nodes.len()+1),
-                                        data: HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
-                                        string_id: Some(new_string_id),
-                                        edge_length: None,
-                                        start: curr_pos.clone(),
-                                    };
-                                    let leaf_node_id = self.nodes.len();
-                                    self.nodes.insert(leaf_node_id.clone(), leaf_node);
-                                    string_leaves.push(leaf_node_id);
-                                    let split_node:Node<T> = Node{
-                                        children: HashMap::from([
-                                            (string[curr_pos].clone(), leaf_node_id.clone()),
-                                            (self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start().clone() + active_point.active_length].clone(), next_node_id.clone())
-                                            ]),
-                                        suffix_link: None,
-                                        string_id: self.get_node(&next_node_id).unwrap().get_string_id().cloned(),
-                                        data: HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
-                                        parent: Some(active_point.active_node.clone()),
-                                        edge_length: Some(active_point.active_length),
-                                        start: self.get_node(&next_node_id).unwrap().get_start().clone(),
-                                    };
-                                    let split_node_id = self.nodes.len();
-                                    self.nodes.insert(split_node_id.clone(), split_node);
-                                    self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), split_node_id);
-                                    let tmp_start = self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length;
-                                    self.get_node_mut(&next_node_id).unwrap().set_start(tmp_start);
-                                    self.get_node_mut(&next_node_id).unwrap().set_parent(split_node_id.clone());
-                                    self.add_suffix_link(&split_node_id, &mut need_suffix_link);
-                                },
-                                false => {},
-                            };
+                            if self.get_node_depth(&active_point.active_node) + active_point.active_length<max_depth{
+                                let leaf_node: Node<T> = Node{
+                                    children: HashMap::new(),
+                                    suffix_link: None,
+                                    parent:Some(self.nodes.len()+1),
+                                    data: HashMap::from([(new_string_id, HashSet::from([(active_point.active_edge_index-self.get_node_depth(&active_point.active_node))]))]),
+                                    string_id: Some(new_string_id),
+                                    edge_length: None,
+                                    start: curr_pos.clone(),
+                                };
+                                let leaf_node_id = self.nodes.len();
+                                self.nodes.insert(leaf_node_id.clone(), leaf_node);
+                                string_leaves.push(leaf_node_id);
+                                let split_node:Node<T> = Node{
+                                    children: HashMap::from([
+                                        (string[curr_pos].clone(), leaf_node_id.clone()),
+                                        (self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start().clone() + active_point.active_length].clone(), next_node_id.clone())
+                                        ]),
+                                    suffix_link: None,
+                                    string_id: self.get_node(&next_node_id).unwrap().get_string_id().cloned(),
+                                    data: HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
+                                    parent: Some(active_point.active_node.clone()),
+                                    edge_length: Some(active_point.active_length),
+                                    start: self.get_node(&next_node_id).unwrap().get_start().clone(),
+                                };
+                                let split_node_id = self.nodes.len();
+                                self.nodes.insert(split_node_id.clone(), split_node);
+                                self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), split_node_id);
+                                let tmp_start = self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length;
+                                self.get_node_mut(&next_node_id).unwrap().set_start(tmp_start);
+                                self.get_node_mut(&next_node_id).unwrap().set_parent(split_node_id.clone());
+                                self.add_suffix_link(&split_node_id, &mut need_suffix_link);
+                            }
+                            else if self.get_node_depth(&active_point.active_node) + active_point.active_length==max_depth{
+                                let split_node:Node<T> = Node{
+                                    children: HashMap::from([
+                                        (self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start().clone() + active_point.active_length].clone(), next_node_id.clone())
+                                        ]),
+                                    suffix_link: None,
+                                    string_id: self.get_node(&next_node_id).unwrap().get_string_id().cloned(),
+                                    data: HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
+                                    parent: Some(active_point.active_node.clone()),
+                                    edge_length: Some(active_point.active_length),
+                                    start: self.get_node(&next_node_id).unwrap().get_start().clone(),
+                                };
+                                let split_node_id = self.nodes.len();
+                                self.nodes.insert(split_node_id.clone(), split_node);
+                                self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), split_node_id);
+                                let tmp_start = self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length;
+                                self.get_node_mut(&next_node_id).unwrap().set_start(tmp_start);
+                                self.get_node_mut(&next_node_id).unwrap().set_parent(split_node_id.clone());
+                                self.add_suffix_link(&split_node_id, &mut need_suffix_link);
+                            }
+                            else{}
                             start_idx += 1;
                         }
                     },
@@ -368,10 +407,6 @@ where
                 }
                 else if active_point.active_node != self.root{
                     active_point.active_node = self.get_suffix_link(&active_point.active_node).cloned().unwrap();
-                    // match self.is_leaf(&active_point.active_node){
-                    //     true => {active_point.active_node = 0;},
-                    //     false => {active_point.active_node = self.get_suffix_link(&active_point.active_node).cloned().unwrap();},
-                    // };
                 }
                 remainder -= 1
             }
@@ -379,7 +414,7 @@ where
         }
 
         for leaf in string_leaves.iter(){
-            let leaf_edge_length: usize = max_depth-self.get_node_depth(self.get_node_parent_id(leaf.clone()).unwrap());
+            let leaf_edge_length: usize = max_depth-self.get_node_depth(self.get_node_parent_id(leaf).unwrap());
             self.get_node_mut(leaf).unwrap().set_edge_length(leaf_edge_length);
             self.set_suffix_link(leaf, &0);
         }
