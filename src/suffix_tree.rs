@@ -115,6 +115,10 @@ where
             Some(node) => node.get_suffix_link(),
         }
     }
+
+    pub fn is_leaf(&self, node_id: &usize)->bool{
+        !self.get_node(node_id).unwrap().has_children()
+    }
     
     fn set_suffix_link(&mut self, node_id: &usize, suffix_link_node_id: &usize){
         match self.get_node_mut(node_id){
@@ -262,7 +266,6 @@ where
         let mut remainder: usize = 0;
         let mut active_point: ActivePoint<T> = ActivePoint::new();
         let mut string_leaves: Vec<usize> = Vec::new();
-        let mut suffix_links: HashMap<usize, usize> = HashMap::new();
         while curr_pos <= seq.len()-1 {
             need_suffix_link = None;
             remainder += 1;
@@ -274,26 +277,32 @@ where
                 let next_node = self.get_node(&active_point.active_node).unwrap().get_child(active_point.active_edge.as_ref().unwrap()).cloned();
                 match next_node{
                     None => {
-                        let new_node: Node<T> = Node{
-                            children: HashMap::new(),
-                            suffix_link: None,
-                            string_id: Some(new_string_id.clone()),
-                            data: HashMap::from([(new_string_id.clone(), HashSet::from([(start_idx.clone())]))]),
-                            parent: Some(active_point.active_node.clone()),
-                            edge_length: None,
-                            start: start_idx.clone(),
+                        match self.get_node_depth(&active_point.active_node) + active_point.active_length<max_depth{
+                            true => {
+                                let new_node: Node<T> = Node{
+                                    children: HashMap::new(),
+                                    suffix_link: None,
+                                    string_id: Some(new_string_id.clone()),
+                                    data: HashMap::from([(new_string_id.clone(), HashSet::from([(start_idx.clone())]))]),
+                                    parent: Some(active_point.active_node.clone()),
+                                    edge_length: None,
+                                    start: start_idx.clone(),
+                                };
+                                let new_node_id = self.nodes.len();
+                                self.nodes.insert(new_node_id.clone(), new_node);
+                                self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
+                                self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), new_node_id);
+                                string_leaves.push(new_node_id.clone());
+                            },
+                            false => {
+                                self.get_node_mut(&active_point.active_node).unwrap().add_seq(new_string_id.clone(), active_point.active_edge_index-max_depth);
+                            },
                         };
-                        let new_node_id = self.nodes.len();
-                        self.nodes.insert(new_node_id.clone(), new_node);
-                        self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
-                        self.get_node_mut(&active_point.active_node).unwrap().set_child(active_point.active_edge.clone().unwrap(), new_node_id);
-                        string_leaves.push(new_node_id.clone());
                         start_idx += 1;
                     },
                     Some(next_node_id) => {
                         let walk_down = self.walk_down(&next_node_id, string, &curr_pos, &mut active_point);
                         if walk_down{
-                            self.get_node_mut(&active_point.active_node).unwrap().add_seq(new_string_id, active_point.active_edge_index-1);
                             continue;
                         }
                         else if self.get_string(self.get_node(&next_node_id).unwrap().get_string_id().unwrap()).unwrap()[self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length] == string[curr_pos]{
@@ -359,6 +368,10 @@ where
                 }
                 else if active_point.active_node != self.root{
                     active_point.active_node = self.get_suffix_link(&active_point.active_node).cloned().unwrap();
+                    // match self.is_leaf(&active_point.active_node){
+                    //     true => {active_point.active_node = 0;},
+                    //     false => {active_point.active_node = self.get_suffix_link(&active_point.active_node).cloned().unwrap();},
+                    // };
                 }
                 remainder -= 1
             }
@@ -368,6 +381,7 @@ where
         for leaf in string_leaves.iter(){
             let leaf_edge_length: usize = max_depth-self.get_node_depth(self.get_node_parent_id(leaf.clone()).unwrap());
             self.get_node_mut(leaf).unwrap().set_edge_length(leaf_edge_length);
+            self.set_suffix_link(leaf, &0);
         }
         string_leaves.clear();
         
