@@ -136,7 +136,7 @@ fn add_string_set_var_trunc(){
     for i in 0..string_set.len(){
         tree.add_string(string_set[i].clone(), dbg!(id_set[i].clone()), max_depth[i]);
     }
-    // dbg!(tree.get_root());
+    dbg!(tree.get_node(&29));
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect());
     assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([1, 11]))]));
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZG".chars().collect());
