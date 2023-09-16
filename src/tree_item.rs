@@ -1,7 +1,9 @@
-use core::fmt::{Debug, self};
-use std::{fmt::Display, hash::Hash};
+use std::fmt;
+use core::fmt::{Debug, Display};
+use std::hash::Hash;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Hash, Eq, PartialEq)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TreeItem<T, U>
 where
     T: Display + Debug + Eq + PartialEq + Hash,
@@ -36,8 +38,15 @@ where
     T: Display + Debug + Eq + PartialEq + Hash,
     U: Display + Debug + Eq + PartialEq + Hash
 {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "String ID: {}\n", self.get_id())?;
+        write!(f, "String: ")?;
+        for v in self.get_string() {
+            write!(f, "{}", v)?;
+        }
+        write!(f, "\n")?;
+        Ok(())
+
     }
 
 }
