@@ -188,25 +188,30 @@ where
 
     pub fn find(&self, s:&Vec<T>) -> HashMap<U, HashSet<usize>>{
         let node = self.get_pattern_node(s);
-        match dbg!(node){
+        match node{
             None => HashMap::new(),
             Some(i) => {
-                let mut leaves:Vec<usize> = vec![];
-                self.leaves_of_node(&i, &mut leaves);
-                let mut ids_and_indexes: HashMap<usize, HashSet<usize>> = HashMap::new();
-                for leaf in leaves{
-                    for (treeitem_id, idx) in self.get_node(&leaf).unwrap().get_data(){
-                        match ids_and_indexes.get_mut(treeitem_id){
-                            None => {ids_and_indexes.insert(treeitem_id.clone(), idx.clone());},
-                            Some(idxs) => {
-                                for i in idx.iter(){
-                                    idxs.insert(i.clone());
-                                }
-                            },
+                if self.get_node_depth(i)<s.len(){
+                    return HashMap::new();
+                }
+                else{
+                    let mut leaves:Vec<usize> = vec![];
+                    self.leaves_of_node(&i, &mut leaves);
+                    let mut ids_and_indexes: HashMap<usize, HashSet<usize>> = HashMap::new();
+                    for leaf in leaves{
+                        for (treeitem_id, idx) in self.get_node(&leaf).unwrap().get_data(){
+                            match ids_and_indexes.get_mut(treeitem_id){
+                                None => {ids_and_indexes.insert(treeitem_id.clone(), idx.clone());},
+                                Some(idxs) => {
+                                    for i in idx.iter(){
+                                        idxs.insert(i.clone());
+                                    }
+                                },
+                            }
                         }
                     }
+                    ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
                 }
-                ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
             }
         }
     }
@@ -309,15 +314,14 @@ where
             need_suffix_link = None;
             remainder += 1;
             while remainder > 0{
-                dbg!(curr_pos.clone(), start_idx.clone(), &active_point);
                 if active_point.active_length == 0{
                     active_point.active_edge_index = curr_pos;
                     active_point.active_edge = Some(string[curr_pos].clone());
                 }
                 let next_node = self.get_node(&active_point.active_node).unwrap().get_child(active_point.active_edge.as_ref().unwrap()).cloned();
-                match dbg!(next_node){
+                match next_node{
                     None => {
-                        match dbg!(self.is_leaf(&active_point.active_node)){
+                        match self.is_leaf(&active_point.active_node){
                             false => {
                                 if self.get_node_depth(&active_point.active_node)<max_depth{
                                     let new_node: Node<T> = Node{
@@ -376,7 +380,7 @@ where
                     },
                     Some(next_node_id) => {
                         let walk_down = self.walk_down(&next_node_id, string, &curr_pos, &mut active_point);
-                        if dbg!(walk_down){
+                        if walk_down{
                             continue;
                         }
                         else if self.get_node_string(&next_node_id).unwrap()[self.get_node_start(&next_node_id) + active_point.active_length] == string[curr_pos]{
@@ -428,7 +432,7 @@ where
                                 self.get_node_mut(&next_node_id).unwrap().set_parent(split_node_id.clone());
                                 self.add_suffix_link(&split_node_id, &mut need_suffix_link);
                             }
-                            else if dbg!(self.get_node_depth(&active_point.active_node) + active_point.active_length==max_depth){
+                            else if self.get_node_depth(&active_point.active_node) + active_point.active_length==max_depth{
                                 let leaf_node: Node<T> = Node{
                                     children: HashMap::new(),
                                     suffix_link: None,
