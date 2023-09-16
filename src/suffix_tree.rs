@@ -290,17 +290,16 @@ where
         false
     }
 
-    pub fn add_string(&mut self, seq: &Vec<T>, seq_id: U, max_depth: &usize){
-        let mut local_seq = seq.clone();
-        local_seq.push(self.terminal_character.clone());
+    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: usize){
+        seq.push(self.terminal_character.clone());
 
-        let new_string: TreeItem<T, U> = TreeItem::new(seq_id, local_seq);
+        let new_string: TreeItem<T, U> = TreeItem::new(seq_id, seq.clone());
         let new_string_id: usize = self.strings.len();
         self.strings.insert(new_string_id.clone(), (new_string, max_depth.clone()));
 
         let max_depth: usize = match max_depth {
             0 => seq.len(),
-            _ => cmp::min(max_depth.clone(), seq.len()-1),
+            _ => cmp::min(max_depth, seq.len()-1),
         };
 
         let string: &Vec<T> = &seq;
