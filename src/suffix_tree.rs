@@ -164,7 +164,7 @@ where
         self.strings.get(treeitem_id)
     }
 
-    fn get_pattern_node(&self, q_string:&Vec<T>)->Option<&usize>{
+    fn get_pattern_node(&self, q_string:&[T])->Option<&usize>{
         let mut node_id: Option<&usize> = Some(&self.root);
         let mut c: &T = &q_string[0];
         let mut i = 0;
@@ -186,7 +186,7 @@ where
         }
     }
 
-    pub fn find(&self, s:&Vec<T>) -> HashMap<U, HashSet<usize>>{
+    pub fn find(&self, s:&[T]) -> HashMap<U, HashSet<usize>>{
         let node = self.get_pattern_node(s);
         match node{
             None => HashMap::new(),
@@ -290,10 +290,11 @@ where
         false
     }
 
-    pub fn add_string(&mut self, mut seq: Vec<T>, seq_id: U, max_depth: &usize){
-        seq.push(self.terminal_character.clone());
+    pub fn add_string(&mut self, seq: &Vec<T>, seq_id: U, max_depth: &usize){
+        let mut local_seq = seq.clone();
+        local_seq.push(self.terminal_character.clone());
 
-        let new_string: TreeItem<T, U> = TreeItem::new(seq_id, seq.clone());
+        let new_string: TreeItem<T, U> = TreeItem::new(seq_id, local_seq);
         let new_string_id: usize = self.strings.len();
         self.strings.insert(new_string_id.clone(), (new_string, max_depth.clone()));
 

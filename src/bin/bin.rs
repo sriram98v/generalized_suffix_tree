@@ -34,7 +34,7 @@ fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>
         .map(|x| *x as char)
         .collect();
     
-        tree.add_string(seq.to_vec(), result_data.id().to_string(), max_depth);
+        tree.add_string(&seq.to_vec(), result_data.id().to_string(), max_depth);
 
         strings.insert(result_data.id().to_string(), seq);
         pb.inc(1);   
