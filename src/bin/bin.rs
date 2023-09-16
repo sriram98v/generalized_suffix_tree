@@ -75,7 +75,7 @@ fn main(){
                 .value_parser(clap::value_parser!(u32))
                 )
         )
-        .about("Metagenomic classifier using Suffix trees")
+        .about("CLI tool to build K-Truncated generalized suffix trees")
         .get_matches();
 
         match matches.subcommand(){
