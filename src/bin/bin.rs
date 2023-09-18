@@ -34,7 +34,7 @@ fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>
         .map(|x| *x as char)
         .collect();
     
-        tree.add_string(&seq.to_vec(), result_data.id().to_string(), max_depth);
+        tree.add_string(seq.to_vec(), result_data.id().to_string(), max_depth);
 
         strings.insert(result_data.id().to_string(), seq);
         pb.inc(1);   
@@ -67,7 +67,7 @@ fn main(){
             .arg(arg!(-o --out <SAVE_FILE> "save file")
                 .required(true)
                 )
-            .arg(arg!(-d --depth <DEPTH> "Max tree depth. (0==full_depth)")
+            .arg(arg!(-d --depth <MAX_DEPTH> "max depth of output tree. (0==length of longest string)")
                 .required(true)
                 )
             .arg(arg!(-n --num <NUM_SEQ> "Number of seq. (0==all)")
@@ -75,12 +75,16 @@ fn main(){
                 .value_parser(clap::value_parser!(u32))
                 )
         )
-        .about("CLI tool to build K-Truncated generalized suffix trees")
+        .about("CLI tool to build and serialize K-Truncated Generalized Suffix trees")
         .get_matches();
 
         match matches.subcommand(){
             Some(("build",  sub_m)) => {
-                let mut tree: KGST<char, String> = build_tree(sub_m.get_one::<String>("source").expect("required").as_str(), sub_m.get_one::<usize>("num").expect("required"), sub_m.get_one::<usize>("depth").expect("required"));
+                let mut tree: KGST<char, String> = build_tree(
+                    sub_m.get_one::<String>("source").expect("required").as_str(), 
+                    sub_m.get_one::<usize>("num").expect("required"), 
+                    sub_m.get_one::<usize>("depth").expect("required")
+                );
                 save_tree(&mut tree, sub_m.get_one::<String>("out").expect("required").to_string());
             },
             _ => {
