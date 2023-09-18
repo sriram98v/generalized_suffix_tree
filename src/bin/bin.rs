@@ -1,6 +1,5 @@
 extern crate clap;
 use clap::{arg, Command};
-use std::collections::HashMap;
 use bio::io::fasta;
 use generalized_suffix_tree::suffix_tree::KGST;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -20,7 +19,6 @@ fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>
     let mut tree: KGST<char, String> = KGST::new('$');
 
     let reader = fasta::Reader::from_file(file).unwrap();
-    let mut strings:HashMap<String, Vec<char>> = HashMap::new();
 
     let mut count = 0;
     
@@ -34,9 +32,8 @@ fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>
         .map(|x| *x as char)
         .collect();
     
-        tree.add_string(seq.to_vec(), result_data.id().to_string(), max_depth);
+        tree.add_string(seq.to_vec(), dbg!(result_data.id().to_string()), max_depth);
 
-        strings.insert(result_data.id().to_string(), seq);
         pb.inc(1);   
         count+=1;
         if &count==num_seq {
