@@ -37,16 +37,16 @@ fn add_string_repeats(){
 #[test]
 fn add_string_set(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "CXYZTTATAGCCXYZCGTACAGACCGAA".to_string().chars().collect()];
-    let id_set:Vec<String> = vec!["first".to_string(),"second".to_string()];
+    let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "CXYZTTATAGCXYZCGTACAGACCGAA".to_string().chars().collect()];
+    let id_set:Vec<String> = vec!["first".to_string(), "second".to_string()];
     let it = string_set.iter().zip(id_set.iter());
     for (string,id) in it{
         tree.add_string(string.clone(), id.clone(), &0);
     }
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([1, 12]))]));
+    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([1, 11]))]));
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"CXYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("second".to_string(), HashSet::from([0, 11]))]));
+    assert_eq!(sstring, HashMap::from([("second".to_string(), HashSet::from([0, 10]))]));
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZG".chars().collect::<Vec<char>>());
     assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14]))]));
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZT".chars().collect::<Vec<char>>());
@@ -90,13 +90,17 @@ fn add_string_no_repeats_trunc(){
 fn add_string_repeats_trunc(){
     let mut tree: KGST<char, String> = KGST::new('$');
     let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
-    let item_id:String = "World".to_string();
+    let item_id:String = "first".to_string();
     let max_depth: usize = 3;
     tree.add_string(item_string.clone(), item_id.clone(), &max_depth);
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
     assert_ne!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
     assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([14]))]));
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::new());
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
 }
 
 #[test]
@@ -111,6 +115,10 @@ fn add_string_set_trunc(){
     }
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
     assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([0, 10]))]));
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::new());
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
 }
 
 #[test]
@@ -128,6 +136,10 @@ fn add_string_set_var_trunc(){
     assert_eq!(sstring, HashMap::new());
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"CXYZ".chars().collect::<Vec<char>>());
     assert_eq!(sstring, HashMap::from([("second".to_string(), HashSet::from([0, 10]))]));
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::new());
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
 
     let mut tree: KGST<char, String> = KGST::new('$');
     let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "CXYZTTATAGCXYZCGTACAGACCGAA".to_string().chars().collect()];
@@ -142,4 +154,8 @@ fn add_string_set_var_trunc(){
     assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14]))]));
     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"CXYZ".chars().collect::<Vec<char>>());
     assert_eq!(sstring, HashMap::new());
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
 }
