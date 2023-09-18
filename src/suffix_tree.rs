@@ -186,6 +186,15 @@ where
         }
     }
 
+    pub fn is_suffix(&self, s:&[T])->bool{
+        let mut query_string: Vec<T> = s.clone().to_vec();
+        query_string.push(self.terminal_character.clone());
+        match self.get_pattern_node(&query_string){
+            None => false,
+            Some(_i) => true
+        }
+    }
+
     pub fn find(&self, s:&[T]) -> HashMap<U, HashSet<usize>>{
         let node = self.get_pattern_node(s);
         let mut leaves:Vec<usize> = vec![];
@@ -310,9 +319,6 @@ where
         let new_string: TreeItem<T, U> = TreeItem::new(seq_id, seq.clone());
         let new_string_id: usize = self.strings.len();
         self.strings.insert(new_string_id.clone(), (new_string, max_depth.clone()));
-
-
-        
 
         let string: &Vec<T> = &seq;
         let mut curr_pos: usize = 0;
