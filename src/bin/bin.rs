@@ -69,10 +69,12 @@ fn main(){
                 )
             .arg(arg!(-d --depth <MAX_DEPTH> "max depth of output tree. (0==length of longest string)")
                 .required(true)
+                .value_parser(clap::value_parser!(usize))
+
                 )
             .arg(arg!(-n --num <NUM_SEQ> "Number of seq. (0==all)")
                 .required(true)
-                .value_parser(clap::value_parser!(u32))
+                .value_parser(clap::value_parser!(usize))
                 )
         )
         .about("CLI tool to build and serialize K-Truncated Generalized Suffix trees")
