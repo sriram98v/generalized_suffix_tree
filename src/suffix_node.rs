@@ -15,7 +15,7 @@ where
     string_id: Option<usize>,
     data: HashMap<usize, HashSet<usize>>,
     parent: Option<usize>,
-    edge_length: Option<usize>,
+    edge_length: usize,
     start: usize,
 }
 
@@ -28,7 +28,7 @@ where
                 string_id: Option<usize>,
                 data: HashMap<usize, HashSet<usize>>,
                 parent: Option<usize>,
-                edge_length: Option<usize>,
+                edge_length: usize,
                 start: usize)->Node<T>{
                     Node {
                         children: children,
@@ -82,21 +82,15 @@ where
     }
 
     pub fn set_edge_length(&mut self, edge_length:usize){
-        self.edge_length = Some(edge_length);
+        self.edge_length = edge_length;
     }
 
-    pub fn get_end(&self, default_end:&usize)->usize{
-        match self.edge_length{
-            None => default_end.clone(),
-            Some(x) => &self.start + x - 1,
-        }
+    pub fn get_end(&self)->usize{
+        self.start + self.edge_length - 1        
     }
 
-    pub fn get_edge_length(&self, leaf_end: &usize)-> usize{
-        match self.edge_length{
-            None => leaf_end.clone(),
-            Some(e) => e,
-        }
+    pub fn get_edge_length(&self)-> usize{
+        self.edge_length
     }
 
     pub fn get_string_id(&self)->Option<&usize>{
@@ -112,11 +106,7 @@ where
     }
 
     pub fn set_start(&mut self, new_start:usize){
-        let new_edge_len: Option<usize> = match self.edge_length{
-            None => {None}
-            Some(old_edge_len) => Some(old_edge_len-(new_start-self.start)),
-        };
-        self.edge_length = new_edge_len;
+        self.edge_length = self.edge_length-(new_start-self.start);
         self.start = new_start;
     }
 
