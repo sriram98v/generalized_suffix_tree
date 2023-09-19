@@ -84,22 +84,22 @@ fn insert_no_repeats_trunc(){
     assert_eq!(sstring, HashMap::new());
 }
 
-// #[test]
-// fn insert_repeats_trunc(){
-//     let mut tree: KGST<char, String> = KGST::new('$');
-//     let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
-//     let item_id:String = "first".to_string();
-//     let max_depth: usize = 3;
-//     tree.insert(item_string.clone(), item_id.clone(), &max_depth);
-//     let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
-//     assert_ne!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
-//     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
-//     assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([14]))]));
-//     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
-//     assert_eq!(sstring, HashMap::new());
-//     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
-//     assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
-// }
+#[test]
+fn insert_repeats_trunc(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
+    let item_id:String = "first".to_string();
+    let max_depth: usize = 3;
+    tree.insert(item_id.clone(), item_string.clone(), &max_depth);
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
+    assert_ne!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([14]))]));
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::new());
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
+}
 
 // #[test]
 // fn insert_set_trunc(){
