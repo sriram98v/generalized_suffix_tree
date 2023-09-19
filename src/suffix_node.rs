@@ -10,19 +10,37 @@ pub struct Node<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    pub children: HashMap<T, usize>,
-    pub suffix_link: Option<usize>,
-    pub string_id: Option<usize>,
-    pub data: HashMap<usize, HashSet<usize>>,
-    pub parent: Option<usize>,
-    pub edge_length: Option<usize>,
-    pub start: usize,
+    children: HashMap<T, usize>,
+    suffix_link: Option<usize>,
+    string_id: Option<usize>,
+    data: HashMap<usize, HashSet<usize>>,
+    parent: Option<usize>,
+    edge_length: Option<usize>,
+    start: usize,
 }
 
 impl<T> Node<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
+    pub fn new(children: HashMap<T, usize>,
+                suffix_link: Option<usize>,
+                string_id: Option<usize>,
+                data: HashMap<usize, HashSet<usize>>,
+                parent: Option<usize>,
+                edge_length: Option<usize>,
+                start: usize)->Node<T>{
+                    Node {
+                        children: children,
+                        suffix_link: suffix_link,
+                        string_id: string_id,
+                        data: data,
+                        parent: parent,
+                        edge_length: edge_length,
+                        start: start,
+                    }
+                }
+
     pub fn set_parent(&mut self, parent: usize){
         self.parent = Some(parent);
     }
@@ -94,8 +112,12 @@ where
     }
 
     pub fn set_start(&mut self, new_start:usize){
+        let new_edge_len: Option<usize> = match self.edge_length{
+            None => {None}
+            Some(old_edge_len) => Some(old_edge_len-(new_start-self.start)),
+        };
+        self.edge_length = new_edge_len;
         self.start = new_start;
-
     }
 
     pub fn has_children(&self)->bool{
