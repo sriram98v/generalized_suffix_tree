@@ -201,7 +201,7 @@ where
         query_string.push(self.terminal_character.clone());
         match self.get_pattern_node(&query_string){
             None => false,
-            Some(_i) => true
+            Some(_) => true
         }
     }
 
@@ -244,19 +244,19 @@ where
         ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
     }
 
-    pub fn get_node_children(&self, node_id: &usize)-> Option<Vec<usize>>{
+    pub fn get_node_children(&self, node_id: &usize)-> Option<&HashMap<T, usize>>{
         match self.get_node(node_id){
             None => None,
-            Some(node) => Some(node.get_children().values().map(|x| x.clone()).collect())
+            Some(node) => Some(node.get_children())
         }
     }
 
-    pub fn get_node_children_mut(&mut self, node_id: &usize)-> Option<Vec<&usize>>{
-        match self.get_node(node_id){
-            None => None,
-            Some(node) => Some(node.get_children().values().collect())
-        }
-    }
+    // fn get_node_children_mut(&mut self, node_id: &usize)-> Option<&HashMap<T, usize>>{
+    //     match self.get_node(node_id){
+    //         None => None,
+    //         Some(node) => Some(node.get_children())
+    //     }
+    // }
 
     pub fn get_node_child_id(&self, node_id: &usize, edge_label: &T)->Option<&usize>{
         match self.get_node(node_id){
