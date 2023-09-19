@@ -13,8 +13,23 @@ fn insert(){
     let item_id:String = "World".to_string();
     tree.insert(item_id.clone(), item_string.clone(),&0);
     for i in 0..item_string.len(){
-        assert!(tree.is_suffix(&item_string[dbg!(i)..]));
+        assert!(tree.is_suffix(&item_string[i..]));
     }
+    tree.clear();
+    let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.insert(item_id.clone(), item_string.clone(),&0);
+    for i in 0..item_string.len(){
+        assert!(tree.is_suffix(&item_string[i..]));
+    }
+    tree.clear();
+    let item_string:Vec<char> = "CXYZTTATAGCXYZCGTACAGACCGAA".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.insert(item_id.clone(), item_string.clone(),&0);
+    for i in 0..item_string.len(){
+        assert!(tree.is_suffix(&item_string[i..]));
+    }
+    tree.clear();
 }
 
 #[test]
@@ -50,24 +65,24 @@ fn serialize_deserialize_tree(){
 }
 
 
-// #[test]
-// fn insert_no_repeats_trunc(){
-//     let mut tree: KGST<char, String> = KGST::new('$');
-//     let item_string:Vec<char> = "abcdefghi".chars().collect();
-//     let item_id:String = "World".to_string();
-//     let max_depth: usize = 3;
-//     tree.insert(item_string.clone(), item_id.clone(), &max_depth);
-//     let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
-//     assert_ne!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
-//     for j in 1..max_depth+1{
-//         for i in 0..(item_string.len()-j){
-//             let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string[i..i+j].to_vec());
-//             assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([i]))]));
-//         }
-//     }
-//     let sstring: HashMap<String, HashSet<usize>> = tree.find(&"abcd".chars().collect::<Vec<char>>());
-//     assert_eq!(sstring, HashMap::new());
-// }
+#[test]
+fn insert_no_repeats_trunc(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "abcdefghi".chars().collect();
+    let item_id:String = "World".to_string();
+    let max_depth: usize = 3;
+    tree.insert(item_id.clone(), item_string.clone(), &max_depth);
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
+    assert_eq!(sstring, HashMap::new());
+    for j in 1..max_depth+1{
+        for i in 0..(item_string.len()-j){
+            let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string[i..i+j].to_vec());
+            assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([i]))]));
+        }
+    }
+    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"abcd".chars().collect::<Vec<char>>());
+    assert_eq!(sstring, HashMap::new());
+}
 
 // #[test]
 // fn insert_repeats_trunc(){
