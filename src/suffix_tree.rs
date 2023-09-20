@@ -87,11 +87,11 @@ where
     }
 
     fn leaves_of_node(&self, node_id:&usize, leaves:&mut Vec<usize>){
-        if !self.nodes.get(node_id).unwrap().has_children(){
+        if !self.get_node(node_id).has_children(){
             leaves.push(node_id.clone());
         }
 
-        for child_node_id in self.nodes.get(node_id).unwrap().get_children().values(){
+        for child_node_id in self.get_node(node_id).get_children().values(){
             self.leaves_of_node(child_node_id, leaves);
         }   
     }
@@ -128,7 +128,7 @@ where
     }
 
     // fn is_leaf(&self, node_id: &usize)->bool{
-    //     (!self.get_node(node_id).unwrap().has_children()) && (self.get_node_parent_id(node_id)!=None)
+    //     (!self.get_node(node_id).has_children()) && (self.get_node_parent_id(node_id)!=None)
     // }
 
     fn get_node_edge_length(&self, node_id: &usize)->usize{
@@ -190,7 +190,7 @@ where
         let node = self.get_pattern_node(s);
         let mut leaves:Vec<usize> = vec![];
         let mut ids_and_indexes: HashMap<usize, HashSet<usize>> = HashMap::new();
-        match node{
+        match dbg!(node){
             None => {},
             Some(i) => {
                 if self.get_node_depth(i)<s.len(){
@@ -204,7 +204,7 @@ where
                 }
             }
         }
-        for leaf in leaves{
+        for leaf in dbg!(leaves){
             for (treeitem_id, idx) in self.get_node(&leaf).get_data(){
                 match ids_and_indexes.get_mut(treeitem_id){
                     None => {
@@ -327,11 +327,15 @@ where
                             let new_leaf_node_id = self.nodes.len();
                             self.nodes.insert(new_leaf_node_id.clone(), new_leaf_node);
                             self.set_node_child_id(active_point.active_edge.as_ref().unwrap(), &active_point.active_node, &new_leaf_node_id);
+                            let active_node_data = self.get_node(&active_point.active_node).get_data().clone();
+                            self.get_node_mut(&new_leaf_node_id).add_data(active_node_data);
                             self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
+
+
                         }
                         else if self.get_node_depth(&active_point.active_node)+active_point.active_length==max_depth{
-                            // This means that the last active node was the parent/ancestor of the current active node, and the active node is at the max depth. The current pos and seq id is added to the curr active node
-                            // and the active node is set to the old active node.
+                            // This means that the last active node was the parent/ancestor of the current active node, and the active node is at the max depth. 
+                            // The current pos and seq id is added to the curr active node and the active node is set to the old active node.
                             self.get_node_mut(&active_point.active_node).add_seq(new_string_id.clone(), start_idx.clone());
                             let old_active_node = self.get_node_parent_id(&active_point.active_node).unwrap();
                             active_point.active_length += self.get_node_edge_length(&active_point.active_node);

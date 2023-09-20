@@ -121,4 +121,17 @@ where
     pub fn get_data(&self)->&HashMap<usize, HashSet<usize>>{
         &self.data
     }
+
+    pub fn add_data(&mut self, new_data: HashMap<usize, HashSet<usize>>){
+        for (key, v) in new_data.iter(){
+            match self.data.get_mut(key){
+                None => {self.data.insert(key.clone(), v.clone());},
+                Some(values) => {
+                    for value in v.iter(){
+                        values.insert(value.clone());
+                    }
+                },
+            };
+        }
+    }
 }
