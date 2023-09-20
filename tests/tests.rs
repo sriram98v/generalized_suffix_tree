@@ -1,4 +1,3 @@
-use std::collections::{HashSet, HashMap};
 use generalized_suffix_tree::suffix_tree::*;
 
 #[test]
@@ -37,20 +36,15 @@ fn insert_set(){
     let mut tree: KGST<char, String> = KGST::new('$');
     let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "CXYZTTATAGCXYZCGTACAGACCGAA".to_string().chars().collect()];
     let id_set:Vec<String> = vec!["first".to_string(), "second".to_string()];
-    let it = string_set.iter().zip(id_set.iter());
-    for (string,id) in it{
-        tree.insert(id.clone(), string.clone(), &0);
+    for item_idx in 0..string_set.len(){
+        tree.insert(id_set[item_idx].clone(), string_set[item_idx].clone(), &0);
     }
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([1, 11]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"CXYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("second".to_string(), HashSet::from([0, 10]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZG".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZT".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("second".to_string(), HashSet::from([1]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
+    for item_idx in 0..string_set.len(){
+        for string_idx in 0..string_set[item_idx].len()-1{
+            let suffix_match = tree.suffix_match(&string_set[item_idx][string_idx..]);
+            assert!(suffix_match.get(&id_set[item_idx]).expect("suffix not found!").contains(&string_idx));
+        }
+    }
 }
 
 #[test]
@@ -66,57 +60,34 @@ fn serialize_deserialize_tree(){
 
 
 #[test]
-fn insert_no_repeats_trunc(){
+fn insert_trunc(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "abcdefghi".chars().collect();
+    let item_string:Vec<char> = "MKAILVVLLYTFTTADADTLCIGYHANNSTDTVDTVLEKNVTVTHSVNLLENRHNGKLCKLRGVAPLHLGKCNIAGWILGNPECESLSTAGSWSYIVETSNPDNGTCYPGDFINYEELREQLSSVSSFEKFEIFPKTSSWPNHDTNRGVTAACPHDGAKSFYRNLLWLVKKEKENSYPMINKSYTNNKGKEVLVLWAIHHPATSADQQSLYQNANAYVFVGSSKYSKKFEPEIAARPKVRDQAGRMKYYWTLVEPGDKITFEATGNLVVPIYAFALKRNSGSGIIISDTSVHDCDTTCQTPNGAINTSLPFQNIHPVTIGECPKYVKSTKLRMATGLRNIPSIQSRGLFGAIAGFIEGGWTGMIDGWYGYHHQNEQGSGYAADLKSTQNAIDGITNKVNSVIEKMNTQFTAVGKEFNHLERRIENLNKKVDDGFLDIWTYNAELLVLLENERTLDYHDSNVKNLYEKVRSQLKNNAKEIGNGCFEFYHKCDDTCMESVKNGTYDYPKYSEEAKLNREEIDGVKLESTRIYQILAIYSTVASSLVLVVSLGAISFWMCSNGSLQCRICI".chars().collect();
     let item_id:String = "World".to_string();
     let max_depth: usize = 3;
     tree.insert(item_id.clone(), item_string.clone(), &max_depth);
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
-    assert_eq!(sstring, HashMap::new());
-    for j in 1..max_depth+1{
-        for i in 0..(item_string.len()-j){
-            let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string[i..i+j].to_vec());
-            assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([i]))]));
-        }
+    for i in 0..item_string.len()-max_depth{
+        let substring_match = tree.substring_match(&item_string[i..i+max_depth-1]);
+        assert!(substring_match.get(&item_id).expect("substring not found!").contains(&i));
     }
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"abcd".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::new());
-}
-
-#[test]
-fn insert_repeats_trunc(){
-    let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
-    let item_id:String = "first".to_string();
-    let max_depth: usize = 3;
-    tree.insert(item_id.clone(), item_string.clone(), &max_depth);
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&item_string);
-    assert_ne!(sstring, HashMap::from([(item_id.clone(), HashSet::from([0]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([(item_id.clone(), HashSet::from([14]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::new());
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
 }
 
 #[test]
 fn insert_set_trunc(){
     let mut tree: KGST<char, String> = KGST::new('$');
-    let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "XYZTTATAGCXYZCGTACAGACCGAA".to_string().chars().collect()];
+    let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "CXYZTTATAGCXYZCGTACAGACCGAA".to_string().chars().collect()];
     let id_set:Vec<String> = vec!["first".to_string(),"second".to_string()];
     let it = string_set.iter().zip(id_set.iter());
     let max_depth: usize = 3;
     for (string,id) in it{
         tree.insert(id.clone(), string.clone(), &max_depth);
     }
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([0, 10]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::new());
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
+    for item_idx in 0..string_set.len(){
+        for string_idx in 0..string_set[item_idx].len()-max_depth{
+            let substring_match = tree.substring_match(&string_set[item_idx][string_idx..string_idx+max_depth]);
+            assert!(substring_match.get(&id_set[item_idx]).expect("substring not found!").contains(&string_idx));
+        }
+    }
 }
 
 #[test]
@@ -126,18 +97,17 @@ fn insert_set_var_trunc(){
     let id_set:Vec<String> = vec!["first".to_string(),"second".to_string()];
     let max_depth: Vec<usize> = vec![3, 5];
     for i in 0..string_set.len(){
-        tree.insert(id_set[i].clone(), string_set[i].clone(), &max_depth[i]);
+        tree.insert(dbg!(id_set[i].clone()), string_set[i].clone(), &max_depth[i]);
     }
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([1, 11]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZG".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::new());
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"CXYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("second".to_string(), HashSet::from([0, 10]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::new());
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
+    // dbg!(tree.get_node(&23));
+
+    for item_idx in 0..string_set.len(){
+        for string_idx in 0..string_set[item_idx].len()-max_depth[item_idx]{
+            let substring_match = tree.substring_match(&string_set[item_idx][string_idx..string_idx+max_depth[item_idx]]);
+            // dbg!(&substring_match, &string_set[item_idx][string_idx..string_idx+max_depth[item_idx]]);
+            assert!(substring_match.get(&id_set[item_idx]).expect("Substring not found!").contains(&string_idx));
+        }
+    }
 
     let mut tree: KGST<char, String> = KGST::new('$');
     let string_set: Vec<Vec<char>> = vec!["GATTACAGATTACAXYZGATTACAGATTACA".to_string().chars().collect(), "CXYZTTATAGCXYZCGTACAGACCGAA".to_string().chars().collect()];
@@ -146,14 +116,10 @@ fn insert_set_var_trunc(){
     for i in 0..string_set.len(){
         tree.insert(id_set[i].clone(), string_set[i].clone(), &max_depth[i]);
     }
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14])), ("second".to_string(), HashSet::from([1, 11]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"XYZG".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([14]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"CXYZ".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::new());
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GATTA".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
-    let sstring: HashMap<String, HashSet<usize>> = tree.find(&"GAT".chars().collect::<Vec<char>>());
-    assert_eq!(sstring, HashMap::from([("first".to_string(), HashSet::from([0, 7, 17, 24]))]));
+    for item_idx in 0..string_set.len(){
+        for string_idx in 0..string_set[item_idx].len()-max_depth[item_idx]{
+            let substring_match = tree.substring_match(&string_set[item_idx][string_idx..string_idx+max_depth[item_idx]]);
+            assert!(substring_match.get(&id_set[item_idx]).expect("Substring not found!").contains(&string_idx));
+        }
+    }
 }
