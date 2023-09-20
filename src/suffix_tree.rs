@@ -104,22 +104,16 @@ where
         &self.nodes
     }
 
-    pub fn get_node(&self, node_id: &usize)->Option<&Node<T>>{
-        self.nodes.get(node_id)
+    pub fn get_node(&self, node_id: &usize)->&Node<T>{
+        self.nodes.get(node_id).expect("Node ID does not exist!")
     }
 
-    fn get_suffix_link(&self, node_id: &usize) -> Option<&usize>{
-        match self.nodes.get(node_id){
-            None => None,
-            Some(node) => node.get_suffix_link(),
-        }
+    fn get_suffix_link(&self, node_id: &usize) -> &usize{
+        self.nodes.get(node_id).expect("Node ID does not exist!").get_suffix_link().unwrap_or(&0)
     }
 
-    fn set_suffix_link(&mut self, node_id: &usize, suffix_link_node_id: &usize){
-        match self.get_node_mut(node_id){
-            None => {},
-            Some(node) => node.set_suffix_link(suffix_link_node_id.clone()),
-        };
+    fn set_node_suffix_link(&mut self, node_id: &usize, suffix_link_node_id: &usize){
+        self.get_node_mut(node_id).set_suffix_link(suffix_link_node_id.clone())
     }
 
     // fn get_string_id_by_treeitem_id(&self, treeitem_id: &usize)->Option<&U>{
@@ -129,45 +123,36 @@ where
     //     }
     // }
 
-    fn get_string_by_treeitem_id(&self, treeitem_id: &usize)->Option<&Vec<T>>{
-        match self.strings.get(treeitem_id){
-            None => None,
-            Some(treeitem) => Some(treeitem.0.get_string())
-        }
+    fn get_string_by_treeitem_id(&self, treeitem_id: &usize)->&Vec<T>{
+        self.strings.get(treeitem_id).expect("TreeItem ID does not exist!").0.get_string()
     }
 
     // fn is_leaf(&self, node_id: &usize)->bool{
     //     (!self.get_node(node_id).unwrap().has_children()) && (self.get_node_parent_id(node_id)!=None)
     // }
 
-    fn get_node_edge_length(&self, node_id: &usize)->Option<usize>{
-        match self.get_node(node_id){
-            None => None,
-            Some(node) => Some(node.get_edge_length())
-        }
+    fn get_node_edge_length(&self, node_id: &usize)->usize{
+        self.get_node(node_id).get_edge_length()
     }
 
-    pub fn get_node_string(&self, node_id: &usize)->Option<&Vec<T>>{
-        match self.get_node_string_id(node_id){
-            None => None,
-            Some(i) => self.get_string_by_treeitem_id(i)
-        }
+    pub fn get_node_string(&self, node_id: &usize)->&Vec<T>{
+        self.get_string_by_treeitem_id(self.get_node_string_id(node_id))
     }
 
-    pub fn get_node_string_id(&self, node_id: &usize)->Option<&usize>{
-        self.get_node(node_id).unwrap().get_string_id()
+    pub fn get_node_string_id(&self, node_id: &usize)->&usize{
+        self.get_node(node_id).get_string_id().expect("Node ID is root node")
     }
 
-    fn get_node_mut(&mut self, node_id: &usize)->Option<&mut Node<T>>{
-        self.nodes.get_mut(node_id)
+    fn get_node_mut(&mut self, node_id: &usize)->&mut Node<T>{
+        self.nodes.get_mut(node_id).expect("Node ID does not exist!")
     }
 
     pub fn get_root(&self)->&Node<T>{
-        self.get_node(&0).unwrap()
+        self.get_node(&0)
     }
 
-    fn get_treeitem_by_treeitem_id(&self, treeitem_id: &usize)->Option<&(TreeItem<T, U>, usize)>{
-        self.strings.get(treeitem_id)
+    fn get_treeitem_by_treeitem_id(&self, treeitem_id: &usize)->&(TreeItem<T, U>, usize){
+        self.strings.get(treeitem_id).expect("TreeItem ID does not exist!")
     }
 
     fn get_pattern_node(&self, q_string:&[T])->Option<&usize>{
@@ -180,7 +165,7 @@ where
                 None => return None,
                 Some(n) => {
                     if q_string.len()>self.get_node_depth(n){
-                        i += self.get_node_edge_length(n).unwrap();
+                        i += self.get_node_edge_length(n);
                         c = &q_string[i];
                         node_id = Some(n);
                     }
@@ -220,15 +205,15 @@ where
             }
         }
         for leaf in leaves{
-            for (treeitem_id, idx) in self.get_node(&leaf).unwrap().get_data(){
+            for (treeitem_id, idx) in self.get_node(&leaf).get_data(){
                 match ids_and_indexes.get_mut(treeitem_id){
                     None => {
-                        if self.get_treeitem_by_treeitem_id(treeitem_id).unwrap().1>=s.len(){
+                        if self.get_treeitem_by_treeitem_id(treeitem_id).1>=s.len(){
                             ids_and_indexes.insert(treeitem_id.clone(), idx.clone());
                         }   
                     },
                     Some(idxs) => {
-                        if self.get_treeitem_by_treeitem_id(treeitem_id).unwrap().1>=s.len(){
+                        if self.get_treeitem_by_treeitem_id(treeitem_id).1>=s.len(){
                             for i in idx.iter(){
                                 idxs.insert(i.clone());
                             }
@@ -240,57 +225,41 @@ where
         ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
     }
 
-    pub fn get_node_children(&self, node_id: &usize)-> Option<&HashMap<T, usize>>{
-        match self.get_node(node_id){
-            None => None,
-            Some(node) => Some(node.get_children())
-        }
+    pub fn get_node_children(&self, node_id: &usize)-> &HashMap<T, usize>{
+        self.get_node(node_id).get_children()
     }
 
-    // fn get_node_children_mut(&mut self, node_id: &usize)-> Option<&HashMap<T, usize>>{
-    //     match self.get_node(node_id){
-    //         None => None,
-    //         Some(node) => Some(node.get_children())
-    //     }
-    // }
-
     pub fn get_node_child_id(&self, node_id: &usize, edge_label: &T)->Option<&usize>{
-        match self.get_node(node_id){
-            None => None,
-            Some(child_node) => child_node.get_child(edge_label)
-        }
+        self.get_node(node_id).get_child(edge_label)
     }
 
     pub fn set_node_child_id(&mut self, edge_label: &T, parent_node_id: &usize, child_node_id: &usize){
-        self.get_node_mut(parent_node_id).unwrap().set_child(edge_label.clone(), child_node_id.clone())
+        self.get_node_mut(parent_node_id).set_child(edge_label.clone(), child_node_id.clone())
     }
 
-    pub fn get_node_child(&self, node_id: &usize, edge_label: &T)->Option<&Node<T>>{
-        match self.get_node(node_id){
-            None => None,
-            Some(child_node) => self.get_node(child_node.get_child(edge_label)?)
-        }
+    pub fn get_node_child(&self, node_id: &usize, edge_label: &T)->&Node<T>{
+        self.get_node(self.get_node_child_id(node_id, edge_label).expect("No child!"))
     }
 
     pub fn get_node_parent(&self, node_id: &usize)->Option<&Node<T>>{
-        match self.get_node(node_id).unwrap().get_parent(){
+        match self.get_node(node_id).get_parent(){
             None => None,
-            Some(parent_id) => self.get_node(parent_id)
+            Some(parent_id) => Some(self.get_node(parent_id))
         }
     }
 
     pub fn get_node_parent_id(&self, node_id: &usize)->Option<&usize>{
-        self.get_node(node_id).unwrap().get_parent()
+        self.get_node(node_id).get_parent()
     }
 
     pub fn set_node_parent_id(&mut self, node_id: &usize, parent_id: &usize){
-        self.get_node_mut(node_id).unwrap().set_parent(parent_id.clone())
+        self.get_node_mut(node_id).set_parent(parent_id.clone())
     }
 
     fn node_depth(&self, node_id: &usize, depth: usize)->usize{
-        match self.get_node(node_id).unwrap().get_parent(){
+        match self.get_node(node_id).get_parent(){
             None => return depth,
-            Some(i) => return self.node_depth(i, depth+self.get_node_edge_length(node_id).unwrap())
+            Some(i) => return self.node_depth(i, depth+self.get_node_edge_length(node_id))
         };
     }
 
@@ -299,31 +268,19 @@ where
     }
 
     fn get_node_start(&self, node_id: &usize)->&usize{
-        self.get_node(&node_id).unwrap().get_start()
+        self.get_node(&node_id).get_start()
     }
 
     fn set_node_start(&mut self, node_id: &usize, start: usize){
-        self.get_node_mut(&node_id).unwrap().set_start(start)
+        self.get_node_mut(&node_id).set_start(start)
     }
 
     fn add_suffix_link(&mut self, node_id: &usize, need_suffix_link: &mut Option<usize>){
         match need_suffix_link{
             None => (),
-            Some(i) => self.set_suffix_link(i, node_id),
+            Some(i) => self.set_node_suffix_link(i, node_id),
         };
         *need_suffix_link = Some(node_id.clone())
-    }
-
-    fn walk_down(&mut self, next_node_id:&usize, string:&Vec<T>, active_point: &mut ActivePoint<T>)->bool{
-        let edge_length = self.get_node_edge_length(next_node_id).unwrap();
-        if active_point.active_length >= edge_length{
-            (*active_point).active_length -= edge_length;
-            (*active_point).active_edge_index += edge_length;
-            (*active_point).active_edge = Some(string[active_point.active_edge_index].clone());
-            (*active_point).active_node = next_node_id.clone();
-            return true;
-        }
-        false
     }
 
     pub fn insert(&mut self, k: U, v: Vec<T>, max_depth: &usize){
@@ -350,15 +307,14 @@ where
             need_suffix_link = None;
             remainder += 1;
             while remainder > 0{
-                dbg!(&curr_pos, &start_idx, &active_point);
                 if active_point.active_length == 0{
                     active_point.active_edge_index = curr_pos;
                     active_point.active_edge = Some(seq[curr_pos].clone());
                 }
-                let next_node = self.get_node(&active_point.active_node).unwrap().get_child(active_point.active_edge.as_ref().unwrap()).cloned();
-                match dbg!(next_node){
+                let next_node = self.get_node(&active_point.active_node).get_child(active_point.active_edge.as_ref().unwrap()).cloned();
+                match next_node{
                     None => {
-                        if self.get_node_depth(&active_point.active_node)<max_depth{
+                        if self.get_node_depth(&active_point.active_node)+active_point.active_length<max_depth{
                             let new_leaf_node: Node<T> = Node::new(
                                 HashMap::new(),
                                 None,
@@ -370,22 +326,33 @@ where
                             );
                             let new_leaf_node_id = self.nodes.len();
                             self.nodes.insert(new_leaf_node_id.clone(), new_leaf_node);
-                            self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
                             self.set_node_child_id(active_point.active_edge.as_ref().unwrap(), &active_point.active_node, &new_leaf_node_id);
+                            self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
                         }
-                        else if self.get_node_depth(&active_point.active_node)==max_depth{
-                            self.get_node_mut(&active_point.active_node).unwrap().add_seq(new_string_id.clone(), curr_pos-1);
+                        else if self.get_node_depth(&active_point.active_node)+active_point.active_length==max_depth{
+                            // This means that the last active node was the parent/ancestor of the current active node, and the active node is at the max depth. The current pos and seq id is added to the curr active node
+                            // and the active node is set to the old active node.
+                            self.get_node_mut(&active_point.active_node).add_seq(new_string_id.clone(), start_idx.clone());
+                            let old_active_node = self.get_node_parent_id(&active_point.active_node).unwrap();
+                            active_point.active_length += self.get_node_edge_length(&active_point.active_node);
+                            active_point.active_edge_index -= self.get_node_edge_length(&active_point.active_node);
+                            active_point.active_edge = Some(seq[active_point.active_edge_index].clone());
+                            active_point.active_node = old_active_node.clone();
                         }
                         start_idx += 1;
                     },
                     Some(next_node_id) => {
-                        let walk_down = self.walk_down(&next_node_id, &seq, &mut active_point);
-                        if walk_down{
+                        if self.get_node_edge_length(&next_node_id)<=active_point.active_length{
+                            // if the active point is somewhere past the next node, we shift our active node to the next node and adjust the other values of the active point (skip and count trick).
+                            active_point.active_length -= self.get_node_edge_length(&next_node_id);
+                            active_point.active_edge_index += self.get_node_edge_length(&next_node_id);
+                            active_point.active_edge = Some(seq[active_point.active_edge_index].clone());
+                            active_point.active_node = next_node_id.clone();
                             continue;
                         }
-                        else if self.get_node_string(&next_node_id).unwrap()[self.get_node_start(&next_node_id) + active_point.active_length] == seq[curr_pos]{
+                        else if self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + active_point.active_length] == seq[curr_pos]{
                             if seq[curr_pos] == self.terminal_character{
-                                self.get_node_mut(&next_node_id).unwrap().add_seq(new_string_id.clone(), start_idx.clone());
+                                self.get_node_mut(&next_node_id).add_seq(new_string_id.clone(), start_idx.clone());
                                 start_idx += 1;
                                 self.add_suffix_link(&active_point.active_node, &mut need_suffix_link);
                             }
@@ -396,57 +363,40 @@ where
                             }
                         }
                         else{
-                            if self.get_node_depth(&active_point.active_node)+active_point.active_length<max_depth{
-                                let leaf_node: Node<T> = Node::new(
-                                    HashMap::new(),
-                                    None,
-                                    Some(new_string_id),
-                                    HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
-                                    Some(self.nodes.len()+1),
-                                    max_depth-(self.get_node_depth(&active_point.active_node)+active_point.active_length),
-                                    curr_pos.clone(),
-                                );
-                                let leaf_node_id = self.nodes.len();
-                                self.nodes.insert(leaf_node_id.clone(), leaf_node);
+                            if self.get_node_depth(&active_point.active_node)+active_point.active_length<=max_depth{
                                 let split_node:Node<T> = Node::new(
-                                    HashMap::from([
-                                        (seq[curr_pos].clone(), leaf_node_id.clone()),
-                                        (self.get_node_string(&next_node_id).unwrap()[self.get_node_start(&next_node_id) + active_point.active_length].clone(), next_node_id.clone())
-                                        ]),
-                                    None,
-                                    self.get_node_string_id(&next_node_id).cloned(),
-                                    HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
-                                    Some(active_point.active_node.clone()),
-                                    active_point.active_length,
-                                    self.get_node_start(&next_node_id).clone(),
-                                    );
+                                        HashMap::from([
+                                            (self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + active_point.active_length].clone(), next_node_id.clone())
+                                            ]),
+                                        None,
+                                        Some(self.get_node_string_id(&next_node_id).clone()),
+                                        HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
+                                        Some(active_point.active_node.clone()),
+                                        active_point.active_length,
+                                        self.get_node_start(&next_node_id).clone(),
+                                        );
                                 let split_node_id = self.nodes.len();
                                 self.nodes.insert(split_node_id.clone(), split_node);
                                 self.set_node_child_id(active_point.active_edge.as_ref().unwrap(), &active_point.active_node, &split_node_id);
-                                let tmp_start = self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length;
-                                self.set_node_start(&next_node_id, tmp_start);
+                                let next_node_new_start = self.get_node(&next_node_id).get_start() + active_point.active_length;
+                                self.set_node_start(&next_node_id, next_node_new_start);
                                 self.set_node_parent_id(&next_node_id, &split_node_id);
                                 self.add_suffix_link(&split_node_id, &mut need_suffix_link);
-                            }
-                            else if self.get_node_depth(&active_point.active_node)+active_point.active_length==max_depth{
-                                let split_node:Node<T> = Node::new(
-                                    HashMap::from([
-                                        (self.get_node_string(&next_node_id).unwrap()[self.get_node_start(&next_node_id) + active_point.active_length].clone(), next_node_id.clone())
-                                        ]),
-                                    None,
-                                    self.get_node_string_id(&next_node_id).cloned(),
-                                    HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
-                                    Some(active_point.active_node.clone()),
-                                    active_point.active_length,
-                                    self.get_node_start(&next_node_id).clone(),
+
+                                if self.get_node_depth(&split_node_id)<max_depth{
+                                    let leaf_node: Node<T> = Node::new(
+                                        HashMap::new(),
+                                        None,
+                                        Some(new_string_id),
+                                        HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
+                                        Some(split_node_id.clone()),
+                                        max_depth-(self.get_node_depth(&active_point.active_node)+active_point.active_length),
+                                        curr_pos.clone(),
                                     );
-                                let split_node_id = self.nodes.len();
-                                self.nodes.insert(split_node_id.clone(), split_node);
-                                self.set_node_child_id(active_point.active_edge.as_ref().unwrap(), &active_point.active_node, &split_node_id);
-                                let tmp_start = self.get_node(&next_node_id).unwrap().get_start() + active_point.active_length;
-                                self.set_node_start(&next_node_id, tmp_start);
-                                self.set_node_parent_id(&next_node_id, &split_node_id);
-                                self.add_suffix_link(&split_node_id, &mut need_suffix_link);
+                                    let leaf_node_id = self.nodes.len();
+                                    self.nodes.insert(leaf_node_id.clone(), leaf_node);
+                                    self.set_node_child_id(&seq[curr_pos], &split_node_id, &leaf_node_id);
+                                }                                
                             }
                             start_idx += 1;
                         }
@@ -458,7 +408,7 @@ where
                     active_point.active_length -= 1;
                 }
                 else if active_point.active_node != self.root{
-                    active_point.active_node = self.get_suffix_link(&active_point.active_node).cloned().unwrap();
+                    active_point.active_node = self.get_suffix_link(&active_point.active_node).clone();
                 }
                 remainder -= 1
             }
