@@ -7,7 +7,7 @@ use generalized_suffix_tree;
 
 fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>{
     println!("Building tree from {}", file);
-    let reader = fasta::Reader::from_file(file).unwrap();
+    let reader = fasta::Reader::from_file(file).expect("File node found!");
 
     let total_size = reader.records().count();
 

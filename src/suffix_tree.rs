@@ -32,6 +32,22 @@ where
             active_node: 0,
         }
     }
+
+    fn get_node(&self)->&usize{
+        &self.active_node
+    }
+
+    fn set_node(&mut self, node_id: &usize){
+        self.active_node = node_id.clone()
+    }
+
+    fn get_edge(&self)->&T{
+        self.active_edge.as_ref().expect("Active edge is None!")
+    }
+
+    fn set_edge(&mut self, edge_label: T){
+        self.active_edge = Some(edge_label);
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
