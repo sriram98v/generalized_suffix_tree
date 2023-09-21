@@ -97,14 +97,12 @@ fn insert_set_var_trunc(){
     let id_set:Vec<String> = vec!["first".to_string(),"second".to_string()];
     let max_depth: Vec<usize> = vec![3, 5];
     for i in 0..string_set.len(){
-        tree.insert(dbg!(id_set[i].clone()), string_set[i].clone(), &max_depth[i]);
+        tree.insert(id_set[i].clone(), string_set[i].clone(), &max_depth[i]);
     }
-    // dbg!(tree.get_node(&23));
 
     for item_idx in 0..string_set.len(){
         for string_idx in 0..string_set[item_idx].len()-max_depth[item_idx]{
             let substring_match = tree.substring_match(&string_set[item_idx][string_idx..string_idx+max_depth[item_idx]]);
-            // dbg!(&substring_match, &string_set[item_idx][string_idx..string_idx+max_depth[item_idx]]);
             assert!(substring_match.get(&id_set[item_idx]).expect("Substring not found!").contains(&string_idx));
         }
     }
