@@ -19,8 +19,8 @@ where
     T: Display + Debug + Eq + PartialEq + Hash,
     U: Display + Debug + Eq + PartialEq + Hash
 {
-    pub fn new(id: U, string: Vec<T>)->TreeItem<T, U>{
-        TreeItem { string: string, id: id }
+    pub fn new(k: U, v: Vec<T>)->TreeItem<T, U>{
+        TreeItem { string: v, id: k }
     }
 
     pub fn get_string(&self) -> &Vec<T>{
@@ -46,7 +46,6 @@ where
         }
         write!(f, "\n")?;
         Ok(())
-
     }
 
 }
