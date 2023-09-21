@@ -57,12 +57,12 @@ where
         self.suffix_link.as_ref()
     }
 
-    pub fn add_seq(&mut self, seq_id:usize, start:usize){
-        match self.data.get_mut(&seq_id){
-            None => {self.data.insert(seq_id, HashSet::from([start]));},
+    pub fn add_seq(&mut self, seq_id:&usize, start:&usize){
+        match self.data.get_mut(seq_id){
+            None => {self.data.insert(seq_id.clone(), HashSet::from([start.clone()]));},
             Some(i) => {
-                match i.contains(&start){
-                    false => {i.insert(start);},
+                match i.contains(start){
+                    false => {i.insert(start.clone());},
                     true => {},
                 };
             }
