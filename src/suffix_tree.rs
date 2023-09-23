@@ -287,7 +287,7 @@ where
             remainder += 1;
             while remainder > 0{
                 let active_edge = &seq[start_idx+self.get_node_depth(&active_node)].clone();
-                dbg!(&remainder, &active_node, &active_edge, &curr_pos, &start_idx);
+                // dbg!(&remainder, &active_node, &active_edge, &curr_pos, &start_idx);
                 let next_node = self.get_node(&active_node).get_child(active_edge).cloned();
                 match next_node{
                     None => {
@@ -309,7 +309,7 @@ where
                         start_idx += 1;
                     },
                     Some(next_node_id) => {
-                        if self.get_node_edge_length(&next_node_id)<=curr_pos-start_idx{
+                        if self.get_node_edge_length(&next_node_id)<=curr_pos-start_idx-self.get_node_depth(&active_node){
                             // Walk down to next node (skip count trick)
                             active_node = next_node_id.clone();
                             continue;
@@ -319,9 +319,6 @@ where
                             break;
                         }
                         else{
-                            if self.nodes.len()==66{
-                                dbg!(&next_node_id);
-                            }
                             let split_node_id = self.nodes.len();
                             let split_node:Node<T> = Node::new(
                                     HashMap::from([
