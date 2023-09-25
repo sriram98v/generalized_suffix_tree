@@ -128,6 +128,14 @@ where
         self.get_node(&0)
     }
 
+    fn add_seq_to_leaves(&mut self, node_id: &usize, string_id: &usize, start: &usize){
+        let mut leaves:Vec<usize> = vec![];
+        self.leaves_of_node(node_id, &mut leaves);
+        for leaf in leaves.iter(){
+            self.get_node_mut(leaf).add_seq(string_id, start);
+        }
+    }
+
     fn get_treeitem_by_treeitem_id(&self, treeitem_id: &usize)->&(TreeItem<T, U>, usize){
         self.strings.get(treeitem_id).expect("TreeItem ID does not exist!")
     }
@@ -291,7 +299,6 @@ where
             remainder += 1;
             while remainder > 0{
                 let active_edge = &seq[start_idx+self.get_node_depth(&active_node)].clone();
-                // dbg!(&remainder, &active_node, &active_edge, &curr_pos, &start_idx);
                 let next_node = self.get_node(&active_node).get_child(active_edge).cloned();
                 match next_node{
                     None => {
@@ -318,16 +325,14 @@ where
                             active_node = next_node_id.clone();
                             continue;
                         }
-                        else if self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)] == seq[curr_pos]{
-                            if &seq[curr_pos] == &self.terminal_character{
-                                self.get_node_mut(&next_node_id).add_seq(&new_string_id, &curr_pos);
-                                start_idx += 1;
-                                self.add_suffix_link(&active_node, &mut need_suffix_link);
-
+                        else if self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)] == seq[curr_pos]{   
+                            self.add_seq_to_leaves(&next_node_id, &new_string_id, &start_idx);
+                            if curr_pos==seq.len()-1{
+                                start_idx+=1;
                             }
                             else{
                                 self.add_suffix_link(&active_node, &mut need_suffix_link);
-                                break;
+                                break;    
                             }
                         }
                         else{
