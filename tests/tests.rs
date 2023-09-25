@@ -11,7 +11,6 @@ fn insert(){
     let item_string:Vec<char> = "MKAILVVLLYTFTTADADTLCIGYHANNSTDTVDTVLEKNVTVTHSVNLLENRHNGKLCKLRGVAPLHLGKCNIAGWILGNPECESLSTAGSWSYIVETSNPDNGTCYPGDFINYEELREQLSSVSSFEKFEIFPKTSSWPNHDTNRGVTAACPHDGAKSFYRNLLWLVKKEKENSYPMINKSYTNNKGKEVLVLWAIHHPATSADQQSLYQNANAYVFVGSSKYSKKFEPEIAARPKVRDQAGRMKYYWTLVEPGDKITFEATGNLVVPIYAFALKRNSGSGIIISDTSVHDCDTTCQTPNGAINTSLPFQNIHPVTIGECPKYVKSTKLRMATGLRNIPSIQSRGLFGAIAGFIEGGWTGMIDGWYGYHHQNEQGSGYAADLKSTQNAIDGITNKVNSVIEKMNTQFTAVGKEFNHLERRIENLNKKVDDGFLDIWTYNAELLVLLENERTLDYHDSNVKNLYEKVRSQLKNNAKEIGNGCFEFYHKCDDTCMESVKNGTYDYPKYSEEAKLNREEIDGVKLESTRIYQILAIYSTVASSLVLVVSLGAISFWMCSNGSLQCRICI".chars().collect();
     let item_id:String = "World".to_string();
     tree.insert(item_id.clone(), item_string.clone(),&0);
-    dbg!(tree.get_node(&66));
     for i in 0..item_string.len(){
         assert!(tree.is_suffix(&item_string[i..]));
     }
@@ -31,6 +30,7 @@ fn insert_set(){
         tree.insert(dbg!(item_idx.to_string()), string_set[item_idx].clone(), &0);
     }
     for item_idx in 0..string_set.len(){
+        dbg!(item_idx);
         for string_idx in 0..string_set[item_idx].len()-1{
             let suffix_match = tree.suffix_match(&string_set[item_idx][string_idx..]);
             assert!(suffix_match.get(&item_idx.to_string()).expect("suffix not found!").contains(&string_idx));

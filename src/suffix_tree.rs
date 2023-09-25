@@ -81,6 +81,10 @@ where
         self.nodes.get(node_id).expect("Node ID does not exist!")
     }
 
+    pub fn get_node_label(&self, node_id: &usize)->&[T]{
+        return &self.get_node_string(node_id)[self.get_node_start(node_id).clone()..self.get_node_start(node_id)+(self.get_node_edge_length(node_id))]
+    }
+
     fn get_suffix_link(&self, node_id: &usize) -> &usize{
         self.nodes.get(node_id).expect("Node ID does not exist!").get_suffix_link().unwrap_or(&0)
     }
@@ -315,8 +319,16 @@ where
                             continue;
                         }
                         else if self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)] == seq[curr_pos]{
-                            self.add_suffix_link(&active_node, &mut need_suffix_link);
-                            break;
+                            if &seq[curr_pos] == &self.terminal_character{
+                                self.get_node_mut(&next_node_id).add_seq(&new_string_id, &curr_pos);
+                                start_idx += 1;
+                                self.add_suffix_link(&active_node, &mut need_suffix_link);
+
+                            }
+                            else{
+                                self.add_suffix_link(&active_node, &mut need_suffix_link);
+                                break;
+                            }
                         }
                         else{
                             let split_node_id = self.nodes.len();
