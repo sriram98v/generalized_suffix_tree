@@ -1,4 +1,4 @@
-use crate::suffix_node::Node;
+use crate::suffix_node::{Node, SuffixNode};
 use crate::tree_item::TreeItem;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Debug};
