@@ -1,4 +1,5 @@
 # KGST
+![Build Status](https://github.com/sriram98v/kgst/workflows/Rust/badge.svg)
 [![LICENSE](https://img.shields.io/crates/l/kgst)](LICENSE)
 [![Crates](https://img.shields.io/crates/v/kgst)](https://crates.io/crates/kgst)
 [![Documentation](https://docs.rs/kgst/badge.svg)](https://docs.rs/kgst)
