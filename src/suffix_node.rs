@@ -4,6 +4,28 @@ use std::hash::Hash;
 use std::option::Option;
 use serde::{Serialize, Deserialize};
 
+pub trait SuffixNode<T> {
+    fn set_parent(&mut self, parent: usize);
+    fn get_parent(&self)->Option<&usize>;
+    fn set_suffix_link(&mut self, link_node:usize);
+    fn get_suffix_link(&self)->Option<&usize>;
+    fn add_seq(&mut self, seq_id:&usize, start:&usize);
+    fn get_child(&self, child:&T)->Option<&usize>;
+    fn get_child_mut(&mut self, child:&T)->Option<&mut usize>;
+    fn set_child(&mut self, edge:T, child:usize);
+    fn set_edge_length(&mut self, edge_length:usize);
+    fn get_end(&self)->usize;
+    fn get_edge_length(&self)-> usize;
+    fn get_string_id(&self)->Option<&usize>;
+    fn get_start(&self)->&usize;
+    fn set_string_id(&mut self, string_id:usize);
+    fn set_start(&mut self, new_start:usize);
+    fn has_children(&self)->bool;
+    fn get_children(&self)->&HashMap<T, usize>;
+    fn get_data(&self)->&HashMap<usize, HashSet<usize>>;
+    fn add_data(&mut self, new_data: HashMap<usize, HashSet<usize>>);
+}
+
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Node<T>
@@ -40,24 +62,30 @@ where
                         start: start,
                     }
                 }
+}
 
-    pub fn set_parent(&mut self, parent: usize){
+impl<T> SuffixNode<T> for Node<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone,
+{
+
+    fn set_parent(&mut self, parent: usize){
         self.parent = Some(parent);
     }
 
-    pub fn get_parent(&self)->Option<&usize>{
+    fn get_parent(&self)->Option<&usize>{
         self.parent.as_ref()
     }
 
-    pub fn set_suffix_link(&mut self, link_node:usize){
+    fn set_suffix_link(&mut self, link_node:usize){
         self.suffix_link = Some(link_node);
     }
 
-    pub fn get_suffix_link(&self)->Option<&usize>{
+    fn get_suffix_link(&self)->Option<&usize>{
         self.suffix_link.as_ref()
     }
 
-    pub fn add_seq(&mut self, seq_id:&usize, start:&usize){
+    fn add_seq(&mut self, seq_id:&usize, start:&usize){
         match self.data.get_mut(seq_id){
             None => {self.data.insert(seq_id.clone(), HashSet::from([start.clone()]));},
             Some(i) => {
@@ -69,60 +97,60 @@ where
         };
     }
 
-    pub fn get_child(&self, child:&T)->Option<&usize>{
+    fn get_child(&self, child:&T)->Option<&usize>{
         self.children.get(child)
     }
 
-    pub fn get_child_mut(&mut self, child:&T)->Option<&mut usize>{
+    fn get_child_mut(&mut self, child:&T)->Option<&mut usize>{
         self.children.get_mut(child)
     }
     
-    pub fn set_child(&mut self, edge:T, child:usize){
+    fn set_child(&mut self, edge:T, child:usize){
         self.children.insert(edge, child);
     }
 
-    pub fn set_edge_length(&mut self, edge_length:usize){
+    fn set_edge_length(&mut self, edge_length:usize){
         self.edge_length = edge_length;
     }
 
-    pub fn get_end(&self)->usize{
+    fn get_end(&self)->usize{
         self.start + self.edge_length - 1        
     }
 
-    pub fn get_edge_length(&self)-> usize{
+    fn get_edge_length(&self)-> usize{
         self.edge_length
     }
 
-    pub fn get_string_id(&self)->Option<&usize>{
+    fn get_string_id(&self)->Option<&usize>{
         self.string_id.as_ref()
     }
 
-    pub fn get_start(&self)->&usize{
+    fn get_start(&self)->&usize{
         &self.start
     }
 
-    pub fn set_string_id(&mut self, string_id:usize){
+    fn set_string_id(&mut self, string_id:usize){
         self.string_id = Some(string_id);
     }
 
-    pub fn set_start(&mut self, new_start:usize){
+    fn set_start(&mut self, new_start:usize){
         self.edge_length = self.edge_length-(new_start-self.start);
         self.start = new_start;
     }
 
-    pub fn has_children(&self)->bool{
+    fn has_children(&self)->bool{
         !self.children.is_empty()
     }
 
-    pub fn get_children(&self)->&HashMap<T, usize>{
+    fn get_children(&self)->&HashMap<T, usize>{
         &self.children
     }
 
-    pub fn get_data(&self)->&HashMap<usize, HashSet<usize>>{
+    fn get_data(&self)->&HashMap<usize, HashSet<usize>>{
         &self.data
     }
 
-    pub fn add_data(&mut self, new_data: HashMap<usize, HashSet<usize>>){
+    fn add_data(&mut self, new_data: HashMap<usize, HashSet<usize>>){
         for (key, v) in new_data.iter(){
             match self.data.get_mut(key){
                 None => {self.data.insert(key.clone(), v.clone());},
