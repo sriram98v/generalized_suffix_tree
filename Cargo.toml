@@ -9,7 +9,7 @@ path = "src/bin/bin.rs"
 
 [package]
 name = "kgst"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 path = "src/lib.rs"
 authors = ["Sriram Vijendran <vijendran.sriram@email.com>"]
