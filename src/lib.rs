@@ -17,10 +17,10 @@
 //!
 //!
 //! // Query if some string is a substring in the tree
-//! let substring_match = tree.substring_match(&item_string[i..i+max_depth+1]);
+//! let substring_match = tree.substring_match(&"STVASSLVLVVSLGAISFWMCSNGSLQCRICI".chars().collect::<Vec<char>>());
 //! 
 //! // Query if some string is a suffix in the tree
-//! let suffix_match = tree.suffix_match(&item_string[i..i+max_depth+1]);
+//! let suffix_match = tree.suffix_match(&"RGVAPLHLGKCNIAGWILGNPECESLSTAGSWSYIVE".chars().collect::<Vec<char>>());
 //!
 //! // Clear tree
 //! tree.clear();
