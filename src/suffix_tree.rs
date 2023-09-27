@@ -7,6 +7,8 @@ use std::cmp;
 use std::option::Option;
 use serde::{Serialize, Deserialize};
 
+/// A Generalized Truncated Suffix Tree implemented with a variation of Ukkonen's Algorithm.  
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct KGST<T, U>
 where
@@ -26,6 +28,15 @@ where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
     U: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
+    /// Creates a new empty K-Truncated Generalized Suffix tree, with a constant end symbol. 
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use generalized_suffix_tree::suffix_tree::KGST;
+    /// 
+    /// let tree: KGST<char, String> = KGST::new('$');
+    /// ```
     pub fn new(terminal_character: T)->KGST<T, U>{
         KGST{
             nodes: HashMap::from([(0, Node::new(
@@ -44,6 +55,7 @@ where
         }
     }
 
+    /// Empties the tree of all strings and nodes.
     pub fn clear(&mut self){
         self.root = 0;
         self.nodes = HashMap::from([(0, Node::new(
@@ -68,19 +80,22 @@ where
             self.leaves_of_node(child_node_id, leaves);
         }   
     }
-
+    /// Returns a Hashmap of all the strings present in the tree along with their respective tree depth.
     pub fn get_strings(&self)->&HashMap<usize, (TreeItem<T, U>, usize)>{
         &self.strings
     }
 
+    /// Returns a Hashmap of all the nodes present in the tree.
     pub fn get_nodes(&self)->&HashMap<usize, Node<T>>{
         &self.nodes
     }
 
+    /// Retrieves a node from the tree by node id
     pub fn get_node(&self, node_id: &usize)->&Node<T>{
         self.nodes.get(node_id).expect("Node ID does not exist!")
     }
 
+    /// Returns the string represented by the incoming edge of the node.
     pub fn get_node_label(&self, node_id: &usize)->&[T]{
         return &self.get_node_string(node_id)[self.get_node_start(node_id).clone()..self.get_node_start(node_id)+(self.get_node_edge_length(node_id))]
     }
@@ -92,13 +107,6 @@ where
     fn set_node_suffix_link(&mut self, node_id: &usize, suffix_link_node_id: &usize){
         self.get_node_mut(node_id).set_suffix_link(suffix_link_node_id.clone())
     }
-
-    // fn get_string_id_by_treeitem_id(&self, treeitem_id: &usize)->Option<&U>{
-    //     match self.strings.get(treeitem_id){
-    //         None => None,
-    //         Some(treeitem) => Some(treeitem.0.get_id())
-    //     }
-    // }
 
     fn get_string_by_treeitem_id(&self, treeitem_id: &usize)->&Vec<T>{
         self.strings.get(treeitem_id).expect("TreeItem ID does not exist!").0.get_string()
@@ -112,11 +120,11 @@ where
         self.get_node(node_id).get_edge_length()
     }
 
-    pub fn get_node_string(&self, node_id: &usize)->&Vec<T>{
+    fn get_node_string(&self, node_id: &usize)->&Vec<T>{
         self.get_string_by_treeitem_id(self.get_node_string_id(node_id))
     }
 
-    pub fn get_node_string_id(&self, node_id: &usize)->&usize{
+    fn get_node_string_id(&self, node_id: &usize)->&usize{
         self.get_node(node_id).get_string_id().expect("Node ID is root node")
     }
 
@@ -124,6 +132,7 @@ where
         self.nodes.get_mut(node_id).expect("Node ID does not exist!")
     }
 
+    /// Retrieves the root of the tree
     pub fn get_root(&self)->&Node<T>{
         self.get_node(&0)
     }
@@ -162,6 +171,7 @@ where
         }
     }
 
+    /// Checks if the input slice is a suxxif of any of the strings present in the tree.
     pub fn is_suffix(&self, s:&[T])->bool{
         let mut query_string: Vec<T> = s.clone().to_vec();
         query_string.push(self.terminal_character.clone());
@@ -171,12 +181,14 @@ where
         }
     }
 
+    /// Retrieves all strings that the input slice is a suffix of.
     pub fn suffix_match(&self, s:&[T])-> HashMap<U, HashSet<usize>>{
         let mut query_string: Vec<T> = s.clone().to_vec();
         query_string.push(self.terminal_character.clone());
         return self.substring_match(&query_string);
     }
 
+    /// Retrieves all strings that contain the input slice as some substring.
     pub fn substring_match(&self, s:&[T]) -> HashMap<U, HashSet<usize>>{
         let node = self.get_pattern_node(s);
         let mut leaves:Vec<usize> = vec![];
@@ -216,34 +228,34 @@ where
         ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
     }
 
-    pub fn get_node_children(&self, node_id: &usize)-> &HashMap<T, usize>{
+    fn get_node_children(&self, node_id: &usize)-> &HashMap<T, usize>{
         self.get_node(node_id).get_children()
     }
 
-    pub fn get_node_child_id(&self, node_id: &usize, edge_label: &T)->Option<&usize>{
+    fn get_node_child_id(&self, node_id: &usize, edge_label: &T)->Option<&usize>{
         self.get_node(node_id).get_child(edge_label)
     }
 
-    pub fn set_node_child_id(&mut self, edge_label: &T, parent_node_id: &usize, child_node_id: &usize){
+    fn set_node_child_id(&mut self, edge_label: &T, parent_node_id: &usize, child_node_id: &usize){
         self.get_node_mut(parent_node_id).set_child(edge_label.clone(), child_node_id.clone())
     }
 
-    pub fn get_node_child(&self, node_id: &usize, edge_label: &T)->&Node<T>{
+    fn get_node_child(&self, node_id: &usize, edge_label: &T)->&Node<T>{
         self.get_node(self.get_node_child_id(node_id, edge_label).expect("No child!"))
     }
 
-    pub fn get_node_parent(&self, node_id: &usize)->Option<&Node<T>>{
+    fn get_node_parent(&self, node_id: &usize)->Option<&Node<T>>{
         match self.get_node(node_id).get_parent(){
             None => None,
             Some(parent_id) => Some(self.get_node(parent_id))
         }
     }
 
-    pub fn get_node_parent_id(&self, node_id: &usize)->Option<&usize>{
+    fn get_node_parent_id(&self, node_id: &usize)->Option<&usize>{
         self.get_node(node_id).get_parent()
     }
 
-    pub fn set_node_parent_id(&mut self, node_id: &usize, parent_id: &usize){
+    fn set_node_parent_id(&mut self, node_id: &usize, parent_id: &usize){
         self.get_node_mut(node_id).set_parent(parent_id.clone())
     }
 
@@ -274,6 +286,7 @@ where
         *need_suffix_link = Some(node_id.clone())
     }
 
+    /// inserts all suffixes of a string into the tree. If max_depth>0, all substrings of length==max_depth are inserted. 
     pub fn insert(&mut self, k: U, v: Vec<T>, max_depth: &usize){
         let seq_id: U = k.clone();
         let mut seq: Vec<T> = v.clone();
@@ -380,11 +393,13 @@ where
         
     }
 
+    //Checks if a string with string_id already exists in tree.
     pub fn contains(&self, string_id: &U)->bool{
         let string_ids: HashSet<&U> = self.strings.values().map(|x| x.0.get_id()).collect();
         string_ids.contains(string_id)
     }
 
+    /// Prints tree as a string.
     pub fn print_tree(&self){
         todo!()
     }
