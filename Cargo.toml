@@ -11,6 +11,15 @@ path = "src/bin/bin.rs"
 name = "generalized_suffix_tree"
 version = "0.1.0"
 edition = "2021"
+path = "src/lib.rs"
+authors = ["Sriram Vijendran <vijendran.sriram@email.com>"]
+license = "MIT"
+description = "A library containing the implementation of a K-Truncated Generalized Suffix Tree using Ukkonen's Algorithm."
+readme = "README.md"
+homepage = "https://github.com/sriram98v/generalized_suffix_tree"
+repository = "https://github.com/sriram98v/generalized_suffix_tree"
+keywords = ["lib"]
+categories = ["library"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
