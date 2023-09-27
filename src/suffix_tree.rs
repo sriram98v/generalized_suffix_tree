@@ -73,6 +73,27 @@ where
         &self.strings
     }
 
+    fn get_node_data(&self, node_id: &usize)->HashMap<U, HashSet<usize>>{
+        let mut leaves:Vec<usize>  = Vec::new();
+        let mut ids_and_indexes: HashMap<usize, HashSet<usize>> = HashMap::new();
+        self.leaves_of_node(node_id, &mut leaves);
+            for leaf in leaves{
+                for (treeitem_id, idx) in self.get_node(&leaf).get_data(){
+                    match ids_and_indexes.get_mut(treeitem_id){
+                        None => {
+                                ids_and_indexes.insert(treeitem_id.clone(), idx.clone());
+                        },
+                        Some(idxs) => {
+                                for i in idx.iter(){
+                                    idxs.insert(i.clone());
+                            }
+                        },
+                    }
+                }
+            }
+            ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
+    }
+
     pub fn get_nodes(&self)->&HashMap<usize, Node<T>>{
         &self.nodes
     }
