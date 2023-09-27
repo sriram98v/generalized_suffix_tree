@@ -381,18 +381,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "generalized_suffix_tree"
-version = "0.1.0"
-dependencies = [
- "bio",
- "clap",
- "error-chain",
- "indicatif",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -488,6 +476,18 @@ name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
+
+[[package]]
+name = "kgst"
+version = "0.1.0"
+dependencies = [
+ "bio",
+ "clap",
+ "error-chain",
+ "indicatif",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "lazy_static"

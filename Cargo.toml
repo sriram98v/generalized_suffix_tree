@@ -8,7 +8,7 @@ path = "src/bin/bin.rs"
 
 
 [package]
-name = "generalized_suffix_tree"
+name = "kgst"
 version = "0.1.0"
 edition = "2021"
 path = "src/lib.rs"
