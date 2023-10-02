@@ -25,8 +25,8 @@ where
 
 impl<T, U> KGST<T, U> 
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone,
-    U: Display + Debug + Eq + PartialEq + Hash + Clone,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+    U: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
 {
     /// Creates a new empty K-Truncated Generalized Suffix tree, with a constant end symbol. 
     /// 
@@ -422,6 +422,52 @@ where
     /// Prints tree as a string.
     pub fn print_tree(&self){
         todo!()
+    }
+
+    fn export_node(&self, node_id: &usize)->(Vec<T>, HashMap<T, usize>, HashMap<U, HashSet<usize>>, usize){
+        let node = self.get_node(node_id);
+        let children: HashMap<T, usize> = node.get_children().clone();
+        let start = self.get_node_start(node_id);
+        let edge_length: usize = self.get_node_edge_length(node_id);
+        let node_label: Vec<T>;
+        if node_id==&0{
+            node_label = Vec::new();
+        }
+        else{
+            node_label = self.get_node_string(node_id)[start.clone()..start+edge_length].to_vec();
+        }
+        
+        let data: HashMap<U, HashSet<usize>> = self.get_node_data(node_id);
+        
+        return (node_label, children, data, edge_length)
+    }
+
+    pub fn export_all_nodes(&self)->String{
+        #[derive(Debug, Serialize, Deserialize)]
+        pub struct Enode<T, U>
+        where
+            T: Display + Debug + Eq + PartialEq + Hash + Clone,
+            U: Display + Debug + Eq + PartialEq + Hash + Clone,
+        {
+            node_label: Vec<T>,
+            children: HashMap<T, usize>,
+            data: HashMap<U, HashSet<usize>>,
+            edge_length: usize,
+        }
+        
+        let mut out_string: String = String::new();
+        for node_id in self.nodes.keys(){
+            let exp_node_data = self.export_node(node_id);
+            let exp_node = Enode{
+                node_label: exp_node_data.0,
+                children: exp_node_data.1,
+                data: exp_node_data.2,
+                edge_length: exp_node_data.3,
+            };
+            out_string.push_str(&serde_json::to_string(&exp_node).unwrap());
+        }
+        
+        return out_string;
     }
     
 }
