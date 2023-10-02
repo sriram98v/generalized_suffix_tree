@@ -60,7 +60,8 @@ fn export_all_nodes(){
     for item_idx in 0..string_set.len(){
         tree.insert(item_idx.to_string(), string_set[item_idx].clone(), &0);
     }
-    tree.export_all_nodes();
+    let nodes = tree.export_all_nodes();
+    serde_json::to_string_pretty(&nodes).expect("error in node vec");
 }
 
 
