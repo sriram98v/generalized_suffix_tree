@@ -447,7 +447,7 @@ where
         let mut out_vec: Vec<Enode<T, U>> = Vec::new();
         for node_id in self.nodes.keys(){
             let exp_node_data = self.export_node(node_id);
-            let exp_node = Enode::new(exp_node_data.0, exp_node_data.1, exp_node_data.2, exp_node_data.3);
+            let exp_node = Enode::new(exp_node_data.0, exp_node_data.1, exp_node_data.2, exp_node_data.3, node_id.clone());
             out_vec.push(exp_node);
         }
         

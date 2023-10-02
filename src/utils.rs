@@ -14,6 +14,7 @@ where
     children: HashMap<T, usize>,
     data: HashMap<U, HashSet<usize>>,
     edge_length: usize,
+    node_id: usize
 }
 
 impl<T, U> Enode<T, U>
@@ -24,12 +25,14 @@ where
     pub fn new(node_label: Vec<T>,
         children: HashMap<T, usize>,
         data: HashMap<U, HashSet<usize>>,
-        edge_length: usize) -> Enode<T, U>{
+        edge_length: usize,
+        node_id: usize) -> Enode<T, U>{
             Enode{
                 node_label: node_label,
                 children: children,
                 data: data,
                 edge_length: edge_length,
+                node_id: node_id
             }
         }
 }
