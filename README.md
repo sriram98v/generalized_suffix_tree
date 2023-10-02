@@ -4,6 +4,8 @@
 [![Crates](https://img.shields.io/crates/v/kgst)](https://crates.io/crates/kgst)
 [![Documentation](https://docs.rs/kgst/badge.svg)](https://docs.rs/kgst)
 
+![alt text](proj_im.png)
+
 ## Library
  A library containing the implementation of a K-Truncated Generalized Suffix Tree using Ukkonen's Algorithm, along with a CLI tool to quickly build and serialize KGST's.
 
