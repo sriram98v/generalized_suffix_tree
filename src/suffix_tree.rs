@@ -1,5 +1,6 @@
 use crate::suffix_node::{Node, SuffixNode};
 use crate::tree_item::TreeItem;
+use crate::utils::Enode;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
@@ -442,32 +443,15 @@ where
         return (node_label, children, data, edge_length)
     }
 
-    pub fn export_all_nodes(&self)->String{
-        #[derive(Debug, Serialize, Deserialize)]
-        pub struct Enode<T, U>
-        where
-            T: Display + Debug + Eq + PartialEq + Hash + Clone,
-            U: Display + Debug + Eq + PartialEq + Hash + Clone,
-        {
-            node_label: Vec<T>,
-            children: HashMap<T, usize>,
-            data: HashMap<U, HashSet<usize>>,
-            edge_length: usize,
-        }
-        
-        let mut out_string: String = String::new();
+    pub fn export_all_nodes(&self)->Vec<Enode<T, U>>{
+        let mut out_vec: Vec<Enode<T, U>> = Vec::new();
         for node_id in self.nodes.keys(){
             let exp_node_data = self.export_node(node_id);
-            let exp_node = Enode{
-                node_label: exp_node_data.0,
-                children: exp_node_data.1,
-                data: exp_node_data.2,
-                edge_length: exp_node_data.3,
-            };
-            out_string.push_str(&serde_json::to_string(&exp_node).unwrap());
+            let exp_node = Enode::new(exp_node_data.0, exp_node_data.1, exp_node_data.2, exp_node_data.3);
+            out_vec.push(exp_node);
         }
         
-        return out_string;
+        return out_vec;
     }
     
 }
