@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::option::Option;
@@ -7,7 +7,6 @@ use serde::{Serialize, Deserialize};
 pub trait SuffixNode<T> {
     fn set_parent(&mut self, parent: usize);
     fn get_parent(&self)->Option<&usize>;
-    fn add_seq(&mut self, seq_id:&usize, start:&usize);
     fn get_child(&self, child:&T)->Option<&usize>;
     fn get_child_mut(&mut self, child:&T)->Option<&mut usize>;
     fn set_child(&mut self, edge:T, child:usize);
@@ -20,8 +19,6 @@ pub trait SuffixNode<T> {
     fn set_start(&mut self, new_start:usize);
     fn has_children(&self)->bool;
     fn get_children(&self)->&HashMap<T, usize>;
-    fn get_data(&self)->&HashMap<usize, HashSet<usize>>;
-    fn add_data(&mut self, new_data: HashMap<usize, HashSet<usize>>);
 }
 
 
@@ -32,7 +29,6 @@ where
 {
     children: HashMap<T, usize>,
     string_id: Option<usize>,
-    data: HashMap<usize, HashSet<usize>>,
     parent: Option<usize>,
     edge_length: usize,
     start: usize,
@@ -44,14 +40,12 @@ where
 {
     pub fn new(children: HashMap<T, usize>,
                 string_id: Option<usize>,
-                data: HashMap<usize, HashSet<usize>>,
                 parent: Option<usize>,
                 edge_length: usize,
                 start: usize)->Node<T>{
                     Node {
                         children: children,
                         string_id: string_id,
-                        data: data,
                         parent: parent,
                         edge_length: edge_length,
                         start: start,
@@ -72,17 +66,6 @@ where
         self.parent.as_ref()
     }
 
-    fn add_seq(&mut self, seq_id:&usize, start:&usize){
-        match self.data.get_mut(seq_id){
-            None => {self.data.insert(seq_id.clone(), HashSet::from([start.clone()]));},
-            Some(i) => {
-                match i.contains(start){
-                    false => {i.insert(start.clone());},
-                    true => {},
-                };
-            }
-        };
-    }
 
     fn get_child(&self, child:&T)->Option<&usize>{
         self.children.get(child)
@@ -133,20 +116,4 @@ where
         &self.children
     }
 
-    fn get_data(&self)->&HashMap<usize, HashSet<usize>>{
-        &self.data
-    }
-
-    fn add_data(&mut self, new_data: HashMap<usize, HashSet<usize>>){
-        for (key, v) in new_data.iter(){
-            match self.data.get_mut(key){
-                None => {self.data.insert(key.clone(), v.clone());},
-                Some(values) => {
-                    for value in v.iter(){
-                        values.insert(value.clone());
-                    }
-                },
-            };
-        }
-    }
 }

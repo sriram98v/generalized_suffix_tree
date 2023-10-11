@@ -48,7 +48,6 @@ where
             nodes: HashMap::from([(0, Node::new(
                 HashMap::new(),
                 None,
-                HashMap::new(),
                 None,
                 0,
                 0
@@ -68,7 +67,6 @@ where
         self.nodes = HashMap::from([(0, Node::new(
             HashMap::new(),
             None,
-            HashMap::new(),
             None,
             0,
             0
@@ -138,7 +136,6 @@ where
                 let node: Node<T> = Node::new(
                     children,
                     string_id,
-                    data.clone(),
                     parent,
                     edge_length,
                     start
@@ -258,7 +255,7 @@ where
             }
         }
         for leaf in leaves{
-            for (treeitem_id, idx) in self.get_node(&leaf).get_data(){
+            for (treeitem_id, idx) in self.get_node_data(&leaf){
                 match ids_and_indexes.get_mut(treeitem_id){
                     None => {
                         if self.get_treeitem_by_treeitem_id(treeitem_id).1>=s.len(){
@@ -306,8 +303,7 @@ where
     }
 
     fn add_seq_to_node(&mut self, node_id: &NodeID , seq_id: &StringID, start: &usize){
-        self.get_node_mut(node_id).add_seq(seq_id, start);
-        // self.node_data.insert(node_id.clone(), HashMap::from([(seq_id.clone(), HashSet::from([start.clone()]))]));
+        self.node_data.entry(node_id.clone()).or_default().entry(seq_id.clone()).or_default().insert(start.clone());
     }
 
     fn add_data_to_node(&mut self, node_id: &NodeID, data: HashMap<StringID, HashSet<usize>>){
@@ -319,7 +315,7 @@ where
     }
 
     fn get_node_data(&self, node_id: &NodeID)->&HashMap<StringID, HashSet<usize>>{
-        self.get_node(node_id).get_data()
+        self.node_data.get(node_id).expect("Node ID does not exist!")
     }
 
     fn set_node_parent_id(&mut self, node_id: &NodeID, parent_id: &NodeID){
