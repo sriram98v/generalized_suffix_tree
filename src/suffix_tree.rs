@@ -1,7 +1,7 @@
 use crate::suffix_node::{Node, SuffixNode};
 use crate::tree_item::TreeItem;
 use crate::utils::Enode;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, LinkedList};
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::cmp;
@@ -18,7 +18,12 @@ pub trait SuffixTree<T>{
     fn get_node_parent(&self, node_id: &NodeID)->Option<&NodeID>;
     fn get_node_depth(&self, node_id: &NodeID)->usize;
     fn get_suffix_link(&self, node_id: &NodeID) -> &usize;
-}
+    fn get_node_label(&self, node_id: &NodeID)->&[T];
+    fn get_node_path_label(&self, node_id: &NodeID)->&[T];
+    fn get_node_path(&self, node_id: &NodeID)->LinkedList<NodeID>;
+    /// Checks if the input slice is a suffix of any of the strings present in the tree.
+    fn is_suffix(&self, s:&[T])->bool;
+    }
 
 /// A Generalized Truncated Suffix Tree implemented with a variation of Ukkonen's Algorithm.  
 
@@ -52,8 +57,8 @@ where
     /// 
     /// let tree: KGST<char, String> = KGST::new('$');
     /// ```
-    pub fn new(terminal_character: T)->KGST<T, U>{
-        KGST{
+    pub fn new(terminal_character: T)->Self{
+        Self {
             nodes: HashMap::from([(0, Node::new(
                 HashMap::new(),
                 None,
@@ -158,7 +163,6 @@ where
 
     fn set_node_suffix_link(&mut self, node_id: &NodeID, suffix_link_node_id: &NodeID){
         self.suffix_links.entry(node_id.clone()).and_modify(|e| *e=suffix_link_node_id.clone()).or_insert(suffix_link_node_id.clone());
-        // self.get_node_mut(node_id).set_suffix_link(suffix_link_node_id.clone())
     }
 
     fn get_string_by_treeitem_id(&self, treeitem_id: &StringID)->&Vec<T>{
@@ -217,16 +221,6 @@ where
                     }
                 },
             }
-        }
-    }
-
-    /// Checks if the input slice is a suxxif of any of the strings present in the tree.
-    pub fn is_suffix(&self, s:&[T])->bool{
-        let mut query_string: Vec<T> = s.clone().to_vec();
-        query_string.push(self.terminal_character.clone());
-        match self.get_pattern_node(&query_string){
-            None => false,
-            Some(_) => true
         }
     }
 
@@ -492,5 +486,79 @@ where
     }
     fn get_suffix_link(&self, node_id: &NodeID) -> &usize{
         self.suffix_links.get(node_id).expect("Node id does not exist!")
+    }
+    fn get_node_label(&self, node_id: &NodeID)->&[T]{
+        todo!();
+    }
+    fn get_node_path_label(&self, node_id: &NodeID)->&[T]{
+        todo!();
+    }
+    fn get_node_path(&self, node_id: &NodeID)->LinkedList<NodeID>{
+        todo!();
+    }
+
+    fn is_suffix(&self, s:&[T])->bool{
+        let mut query_string: Vec<T> = s.clone().to_vec();
+        query_string.push(self.terminal_character.clone());
+        match self.get_pattern_node(&query_string){
+            None => false,
+            Some(_) => true
+        }
+    }
+}
+
+pub struct PreOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    stack: Vec<NodeID>,
+    nodes: HashMap<NodeID, HashMap<T, NodeID>>
+}
+
+impl<T> PreOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    pub fn new(start_node_id: &NodeID, nodes: HashMap<NodeID, Node<T>>)->Self{
+        Self { stack:vec![start_node_id.clone()], nodes: nodes.iter().map(|(edge_label, child_node)| {
+            (edge_label.clone(), child_node.get_children().clone())
+        }).collect::<HashMap<NodeID, HashMap<T, NodeID>>>() }
+    }
+}
+
+impl<T> Iterator for PreOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    type Item = NodeID;
+
+    fn next(&mut self)->Option<Self::Item>{
+        if let Some(node_id) = self.stack.pop() {
+            let children_ids:Vec<&NodeID> = self.nodes.get(&node_id).expect("Invalid Node ID!").values().collect();
+            for child_node_id in children_ids.into_iter(){
+                self.stack.push(child_node_id.clone())
+            }
+            return Some(node_id)
+        }
+        return None;
+    }
+}
+
+pub struct PostOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    stack: Vec<NodeID>,
+    nodes: HashMap<NodeID, HashMap<T, NodeID>>
+}
+
+impl<T> PostOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    pub fn new(start_node_id: &NodeID, nodes: HashMap<NodeID, Node<T>>)->Self{
+        Self { stack:vec![start_node_id.clone()], nodes: nodes.iter().map(|(edge_label, child_node)| {
+            (edge_label.clone(), child_node.get_children().clone())
+        }).collect::<HashMap<NodeID, HashMap<T, NodeID>>>() }
     }
 }
