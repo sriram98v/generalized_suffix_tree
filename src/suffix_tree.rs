@@ -431,6 +431,11 @@ where
         todo!()
     }
 
+    /// Returns a preorder node iterator of the tree
+    pub fn iter_nodes_pre(&self)->PreOrdNodes<T>{
+        PreOrdNodes::new(&self.root, &self.nodes)
+    }
+
     fn export_node(&self, node_id: &NodeID)->(Vec<T>, HashMap<T, usize>, HashMap<U, HashSet<usize>>, usize){
         let node = self.get_node(node_id);
         let children: HashMap<T, usize> = node.get_children().clone();
@@ -458,6 +463,21 @@ where
         }
         
         return out_vec;
+    }
+
+    pub fn export_all_edges(&self)->Vec<(NodeID, NodeID)>{
+        let mut edges: Vec<(NodeID, NodeID)> = Vec::new();
+        for node_id in self.iter_nodes_pre(){
+            for child_id in self.get_node_children(&node_id).values(){
+                edges.push((node_id.clone(), child_id.clone()))
+            }
+        }
+        for (n1, n2) in self.suffix_links.iter(){
+            if n2!=&0{
+                edges.push((n2.clone(), n1.clone()))
+            }
+        }
+        edges
     }
     
 }
@@ -508,8 +528,6 @@ where
 }
 
 pub struct PreOrdNodes<T>
-where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
 {
     stack: Vec<NodeID>,
     nodes: HashMap<NodeID, HashMap<T, NodeID>>
@@ -519,7 +537,7 @@ impl<T> PreOrdNodes<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone
 {
-    pub fn new(start_node_id: &NodeID, nodes: HashMap<NodeID, Node<T>>)->Self{
+    pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
         Self { stack:vec![start_node_id.clone()], nodes: nodes.iter().map(|(edge_label, child_node)| {
             (edge_label.clone(), child_node.get_children().clone())
         }).collect::<HashMap<NodeID, HashMap<T, NodeID>>>() }
@@ -541,6 +559,20 @@ where
             return Some(node_id)
         }
         return None;
+    }
+}
+
+pub struct Edges<T>{
+    node_iter: PreOrdNodes<T>,
+    s_links: HashMap<NodeID, NodeID>
+}
+
+impl<T> Edges<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>, s_links: HashMap<NodeID, NodeID>)->Self{
+        Self { node_iter: PreOrdNodes::new(start_node_id, nodes), s_links: s_links }
     }
 }
 
