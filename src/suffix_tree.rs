@@ -11,6 +11,15 @@ use serde::{Serialize, Deserialize};
 type NodeID = usize;
 type StringID = usize;
 
+pub trait SuffixTree<T>{
+    fn root(&self)->&NodeID;
+    fn is_leaf(&self, node_id: &NodeID)->bool;
+    fn get_node_child(&self, node_id: &NodeID, edge_label: &T)->Option<&NodeID>;
+    fn get_node_parent(&self, node_id: &NodeID)->Option<&NodeID>;
+    fn get_node_depth(&self, node_id: &NodeID)->usize;
+    fn get_suffix_link(&self, node_id: &NodeID) -> &usize;
+}
+
 /// A Generalized Truncated Suffix Tree implemented with a variation of Ukkonen's Algorithm.  
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -146,10 +155,6 @@ where
                 return node_id;
             }
 
-    fn get_suffix_link(&self, node_id: &NodeID) -> &usize{
-        self.suffix_links.get(node_id).expect("Node id does not exist!")
-    }
-
     fn set_node_suffix_link(&mut self, node_id: &NodeID, suffix_link_node_id: &NodeID){
         self.suffix_links.entry(node_id.clone()).and_modify(|e| *e=suffix_link_node_id.clone()).or_insert(suffix_link_node_id.clone());
         // self.get_node_mut(node_id).set_suffix_link(suffix_link_node_id.clone())
@@ -158,10 +163,6 @@ where
     fn get_string_by_treeitem_id(&self, treeitem_id: &StringID)->&Vec<T>{
         self.strings.get(treeitem_id).expect("TreeItem ID does not exist!").0.get_string()
     }
-
-    // fn is_leaf(&self, node_id: &NodeID)->bool{
-    //     (!self.get_node(node_id).has_children()) && (self.get_node_parent_id(node_id)!=None)
-    // }
 
     fn get_node_edge_length(&self, node_id: &NodeID)->usize{
         self.get_node(node_id).get_edge_length()
@@ -201,7 +202,7 @@ where
         let mut c: &T = &q_string[0];
         let mut i = 0;
         loop {
-            node_id = self.get_node_child_id(node_id.unwrap(), c);
+            node_id = self.get_node_child(node_id.unwrap(), c);
             match node_id{
                 None => return None,
                 Some(n) => {
@@ -244,7 +245,7 @@ where
             None => {},
             Some(i) => {
                 if self.get_node_depth(i)<s.len(){
-                    match self.get_node_parent_id(i){
+                    match self.get_node_parent(i){
                         None => {},
                         Some(_parent_id) => {self.leaves_of_node(&i, &mut leaves);}
                     }
@@ -279,27 +280,8 @@ where
         self.get_node(node_id).get_children()
     }
 
-    fn get_node_child_id(&self, node_id: &NodeID, edge_label: &T)->Option<&usize>{
-        self.get_node(node_id).get_child(edge_label)
-    }
-
     fn set_node_child_id(&mut self, edge_label: &T, parent_node_id: &NodeID, child_node_id: &NodeID){
         self.get_node_mut(parent_node_id).set_child(edge_label.clone(), child_node_id.clone())
-    }
-
-    // fn get_node_child(&self, node_id: &NodeID, edge_label: &T)->&Node<T>{
-    //     self.get_node(self.get_node_child_id(node_id, edge_label).expect("No child!"))
-    // }
-
-    // fn get_node_parent(&self, node_id: &NodeID)->Option<&Node<T>>{
-    //     match self.get_node(node_id).get_parent(){
-    //         None => None,
-    //         Some(parent_id) => Some(self.get_node(parent_id))
-    //     }
-    // }
-
-    fn get_node_parent_id(&self, node_id: &NodeID)->Option<&usize>{
-        self.get_node(node_id).get_parent()
     }
 
     fn add_seq_to_node(&mut self, node_id: &NodeID , seq_id: &StringID, start: &usize){
@@ -327,10 +309,6 @@ where
             None => return depth,
             Some(i) => return self.node_depth(i, depth+self.get_node_edge_length(node_id))
         };
-    }
-
-    fn get_node_depth(&self, node_id: &NodeID)->usize{
-        self.node_depth(node_id, 0)
     }
 
     fn get_node_start(&self, node_id: &NodeID)->&usize{
@@ -487,4 +465,31 @@ where
         return out_vec;
     }
     
+}
+
+impl<T, U> SuffixTree<T> for KGST<T, U>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+    U: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+{
+    fn root(&self)->&NodeID{
+        return &self.root;
+    }
+
+    fn is_leaf(&self, node_id: &NodeID)->bool{
+        (!self.get_node(node_id).has_children()) && (self.get_node_parent(node_id)!=None)
+    }
+
+    fn get_node_child(&self, node_id: &NodeID, edge_label: &T)->Option<&NodeID>{
+        self.get_node(node_id).get_child(edge_label)
+    }
+    fn get_node_parent(&self, node_id: &NodeID)->Option<&NodeID>{
+        self.get_node(node_id).get_parent()
+    }
+    fn get_node_depth(&self, node_id: &NodeID)->usize{
+        self.node_depth(node_id, 0)
+    }
+    fn get_suffix_link(&self, node_id: &NodeID) -> &usize{
+        self.suffix_links.get(node_id).expect("Node id does not exist!")
+    }
 }
