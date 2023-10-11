@@ -83,6 +83,7 @@ where
         self.strings = HashMap::new();
         self.leaves = Vec::new();
         self.node_data = HashMap::new();
+        self.suffix_links = HashMap::new();
     }
 
     fn leaves_of_node(&self, node_id:&NodeID, leaves:&mut Vec<NodeID>){
