@@ -7,8 +7,6 @@ use serde::{Serialize, Deserialize};
 pub trait SuffixNode<T> {
     fn set_parent(&mut self, parent: usize);
     fn get_parent(&self)->Option<&usize>;
-    fn set_suffix_link(&mut self, link_node:usize);
-    fn get_suffix_link(&self)->Option<&usize>;
     fn add_seq(&mut self, seq_id:&usize, start:&usize);
     fn get_child(&self, child:&T)->Option<&usize>;
     fn get_child_mut(&mut self, child:&T)->Option<&mut usize>;
@@ -33,7 +31,6 @@ where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
     children: HashMap<T, usize>,
-    suffix_link: Option<usize>,
     string_id: Option<usize>,
     data: HashMap<usize, HashSet<usize>>,
     parent: Option<usize>,
@@ -46,7 +43,6 @@ where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
     pub fn new(children: HashMap<T, usize>,
-                suffix_link: Option<usize>,
                 string_id: Option<usize>,
                 data: HashMap<usize, HashSet<usize>>,
                 parent: Option<usize>,
@@ -54,7 +50,6 @@ where
                 start: usize)->Node<T>{
                     Node {
                         children: children,
-                        suffix_link: suffix_link,
                         string_id: string_id,
                         data: data,
                         parent: parent,
@@ -75,14 +70,6 @@ where
 
     fn get_parent(&self)->Option<&usize>{
         self.parent.as_ref()
-    }
-
-    fn set_suffix_link(&mut self, link_node:usize){
-        self.suffix_link = Some(link_node);
-    }
-
-    fn get_suffix_link(&self)->Option<&usize>{
-        self.suffix_link.as_ref()
     }
 
     fn add_seq(&mut self, seq_id:&usize, start:&usize){
