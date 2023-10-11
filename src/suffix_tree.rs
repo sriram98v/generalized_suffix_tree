@@ -21,6 +21,7 @@ where
     terminal_character: T,
     strings: HashMap<usize, (TreeItem<T, U>, usize)>,
     leaves: Vec<usize>,
+    suffix_links: HashMap<usize, usize>
 }
 
 
@@ -43,7 +44,6 @@ where
             nodes: HashMap::from([(0, Node::new(
                 HashMap::new(),
                 None,
-                None,
                 HashMap::new(),
                 None,
                 0,
@@ -53,6 +53,7 @@ where
             terminal_character: terminal_character,
             strings: HashMap::new(),
             leaves: Vec::new(),
+            suffix_links: HashMap::new(),
         }
     }
 
@@ -61,7 +62,6 @@ where
         self.root = 0;
         self.nodes = HashMap::from([(0, Node::new(
             HashMap::new(),
-            None,
             None,
             HashMap::new(),
             None,
@@ -122,11 +122,16 @@ where
     }
 
     fn get_suffix_link(&self, node_id: &usize) -> &usize{
-        self.nodes.get(node_id).expect("Node ID does not exist!").get_suffix_link().unwrap_or(&0)
+        match self.suffix_links.contains_key(node_id){
+            true => return self.suffix_links.get(node_id).unwrap(),
+            false => return  &self.root
+        };
+        // self.nodes.get(node_id).expect("Node ID does not exist!").get_suffix_link().unwrap_or(&0)
     }
 
     fn set_node_suffix_link(&mut self, node_id: &usize, suffix_link_node_id: &usize){
-        self.get_node_mut(node_id).set_suffix_link(suffix_link_node_id.clone())
+        self.suffix_links.entry(node_id.clone()).and_modify(|e| *e=suffix_link_node_id.clone()).or_insert(suffix_link_node_id.clone());
+        // self.get_node_mut(node_id).set_suffix_link(suffix_link_node_id.clone())
     }
 
     fn get_string_by_treeitem_id(&self, treeitem_id: &usize)->&Vec<T>{
@@ -338,7 +343,6 @@ where
                     None => {
                         let new_leaf_node: Node<T> = Node::new(
                             HashMap::new(),
-                            Some(0),
                             Some(new_string_id),
                             HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
                             Some(active_node.clone()),
@@ -375,7 +379,6 @@ where
                                     HashMap::from([
                                         (self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)].clone(), next_node_id.clone())
                                         ]),
-                                    Some(0),
                                     Some(self.get_node_string_id(&next_node_id).clone()),
                                     HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
                                     Some(active_node.clone()),
@@ -389,7 +392,6 @@ where
                             self.set_node_parent_id(&next_node_id, &split_node_id);
                             let leaf_node: Node<T> = Node::new(
                                 HashMap::new(),
-                                Some(0),
                                 Some(new_string_id),
                                 HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
                                 Some(split_node_id.clone()),
