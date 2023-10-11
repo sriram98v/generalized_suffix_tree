@@ -42,8 +42,8 @@ where
                 string_id: Option<usize>,
                 parent: Option<usize>,
                 edge_length: usize,
-                start: usize)->Node<T>{
-                    Node {
+                start: usize)->Self{
+                    Self {
                         children: children,
                         string_id: string_id,
                         parent: parent,
