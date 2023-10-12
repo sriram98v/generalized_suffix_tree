@@ -1,5 +1,4 @@
 extern crate clap;
-use std::collections::HashMap;
 
 use clap::{arg, Command};
 use bio::io::fasta;
