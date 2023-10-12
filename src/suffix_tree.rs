@@ -1,12 +1,29 @@
 use crate::suffix_node::{Node, SuffixNode};
 use crate::tree_item::TreeItem;
 use crate::utils::Enode;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, LinkedList};
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::cmp;
 use std::option::Option;
 use serde::{Serialize, Deserialize};
+
+type NodeID = usize;
+type StringID = usize;
+
+pub trait SuffixTree<T>{
+    fn root(&self)->&NodeID;
+    fn is_leaf(&self, node_id: &NodeID)->bool;
+    fn get_node_child(&self, node_id: &NodeID, edge_label: &T)->Option<&NodeID>;
+    fn get_node_parent(&self, node_id: &NodeID)->Option<&NodeID>;
+    fn get_node_depth(&self, node_id: &NodeID)->usize;
+    fn get_suffix_link(&self, node_id: &NodeID) -> &usize;
+    fn get_node_label(&self, node_id: &NodeID)->&[T];
+    fn get_node_path_label(&self, node_id: &NodeID)->&[T];
+    fn get_node_path(&self, node_id: &NodeID)->LinkedList<NodeID>;
+    /// Checks if the input slice is a suffix of any of the strings present in the tree.
+    fn is_suffix(&self, s:&[T])->bool;
+    }
 
 /// A Generalized Truncated Suffix Tree implemented with a variation of Ukkonen's Algorithm.  
 
@@ -17,10 +34,12 @@ where
     U: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
     root: usize,
-    nodes: HashMap<usize, Node<T>>,
+    nodes: HashMap<NodeID, Node<T>>,
     terminal_character: T,
-    strings: HashMap<usize, (TreeItem<T, U>, usize)>,
-    leaves: Vec<usize>,
+    strings: HashMap<StringID, (TreeItem<T, U>, usize)>,
+    leaves: Vec<NodeID>,
+    suffix_links: HashMap<NodeID, NodeID>,
+    node_data: HashMap<NodeID, HashMap<StringID, HashSet<usize>>>
 }
 
 
@@ -38,13 +57,11 @@ where
     /// 
     /// let tree: KGST<char, String> = KGST::new('$');
     /// ```
-    pub fn new(terminal_character: T)->KGST<T, U>{
-        KGST{
+    pub fn new(terminal_character: T)->Self{
+        Self {
             nodes: HashMap::from([(0, Node::new(
                 HashMap::new(),
                 None,
-                None,
-                HashMap::new(),
                 None,
                 0,
                 0
@@ -53,6 +70,8 @@ where
             terminal_character: terminal_character,
             strings: HashMap::new(),
             leaves: Vec::new(),
+            suffix_links: HashMap::from([(0,0)]),
+            node_data: HashMap::from([(0, HashMap::new())]),
         }
     }
 
@@ -63,16 +82,16 @@ where
             HashMap::new(),
             None,
             None,
-            HashMap::new(),
-            None,
             0,
             0
         ))]);
         self.strings = HashMap::new();
         self.leaves = Vec::new();
+        self.node_data = HashMap::new();
+        self.suffix_links = HashMap::new();
     }
 
-    fn leaves_of_node(&self, node_id:&usize, leaves:&mut Vec<usize>){
+    fn leaves_of_node(&self, node_id:&NodeID, leaves:&mut Vec<NodeID>){
         if !self.get_node(node_id).has_children(){
             leaves.push(node_id.clone());
         }
@@ -81,17 +100,18 @@ where
             self.leaves_of_node(child_node_id, leaves);
         }   
     }
+
     /// Returns a Hashmap of all the strings present in the tree along with their respective tree depth.
-    pub fn get_strings(&self)->&HashMap<usize, (TreeItem<T, U>, usize)>{
+    pub fn get_strings(&self)->&HashMap<StringID, (TreeItem<T, U>, usize)>{
         &self.strings
     }
 
-    fn get_node_data(&self, node_id: &usize)->HashMap<U, HashSet<usize>>{
+    fn get_node_match_data(&self, node_id: &NodeID)->HashMap<U, HashSet<usize>>{
         let mut leaves:Vec<usize>  = Vec::new();
-        let mut ids_and_indexes: HashMap<usize, HashSet<usize>> = HashMap::new();
+        let mut ids_and_indexes: HashMap<StringID, HashSet<usize>> = HashMap::new();
         self.leaves_of_node(node_id, &mut leaves);
             for leaf in leaves{
-                for (treeitem_id, idx) in self.get_node(&leaf).get_data(){
+                for (treeitem_id, idx) in self.get_node_data(&leaf){
                     match ids_and_indexes.get_mut(treeitem_id){
                         None => {
                                 ids_and_indexes.insert(treeitem_id.clone(), idx.clone());
@@ -107,49 +127,61 @@ where
             ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
     }
 
-    pub fn get_nodes(&self)->&HashMap<usize, Node<T>>{
+    pub fn get_nodes(&self)->&HashMap<NodeID, Node<T>>{
         &self.nodes
     }
 
     /// Retrieves a node from the tree by node id
-    pub fn get_node(&self, node_id: &usize)->&Node<T>{
+    pub fn get_node(&self, node_id: &NodeID)->&Node<T>{
         self.nodes.get(node_id).expect("Node ID does not exist!")
     }
 
     /// Returns the string represented by the incoming edge of the node.
-    pub fn get_node_label(&self, node_id: &usize)->&[T]{
+    pub fn get_node_label(&self, node_id: &NodeID)->&[T]{
         return &self.get_node_string(node_id)[self.get_node_start(node_id).clone()..self.get_node_start(node_id)+(self.get_node_edge_length(node_id))]
     }
 
-    fn get_suffix_link(&self, node_id: &usize) -> &usize{
-        self.nodes.get(node_id).expect("Node ID does not exist!").get_suffix_link().unwrap_or(&0)
+    fn create_node(&mut self, children: HashMap<T, usize>,
+            string_id: Option<usize>,
+            data: HashMap<StringID, HashSet<usize>>,
+            parent: Option<usize>,
+            edge_length: usize,
+            start: usize) -> usize{
+                let node_id: usize = self.nodes.len();
+                let node: Node<T> = Node::new(
+                    children,
+                    string_id,
+                    parent,
+                    edge_length,
+                    start
+                );
+                self.suffix_links.insert(node_id.clone(), 0);
+                self.nodes.insert(node_id.clone(), node);
+                self.node_data.insert(node_id.clone(), data);
+                return node_id;
+            }
+
+    fn set_node_suffix_link(&mut self, node_id: &NodeID, suffix_link_node_id: &NodeID){
+        self.suffix_links.entry(node_id.clone()).and_modify(|e| *e=suffix_link_node_id.clone()).or_insert(suffix_link_node_id.clone());
     }
 
-    fn set_node_suffix_link(&mut self, node_id: &usize, suffix_link_node_id: &usize){
-        self.get_node_mut(node_id).set_suffix_link(suffix_link_node_id.clone())
-    }
-
-    fn get_string_by_treeitem_id(&self, treeitem_id: &usize)->&Vec<T>{
+    fn get_string_by_treeitem_id(&self, treeitem_id: &StringID)->&Vec<T>{
         self.strings.get(treeitem_id).expect("TreeItem ID does not exist!").0.get_string()
     }
 
-    // fn is_leaf(&self, node_id: &usize)->bool{
-    //     (!self.get_node(node_id).has_children()) && (self.get_node_parent_id(node_id)!=None)
-    // }
-
-    fn get_node_edge_length(&self, node_id: &usize)->usize{
+    fn get_node_edge_length(&self, node_id: &NodeID)->usize{
         self.get_node(node_id).get_edge_length()
     }
 
-    fn get_node_string(&self, node_id: &usize)->&Vec<T>{
+    fn get_node_string(&self, node_id: &NodeID)->&Vec<T>{
         self.get_string_by_treeitem_id(self.get_node_string_id(node_id))
     }
 
-    fn get_node_string_id(&self, node_id: &usize)->&usize{
+    fn get_node_string_id(&self, node_id: &NodeID)->&usize{
         self.get_node(node_id).get_string_id().expect("Node ID is root node")
     }
 
-    fn get_node_mut(&mut self, node_id: &usize)->&mut Node<T>{
+    fn get_node_mut(&mut self, node_id: &NodeID)->&mut Node<T>{
         self.nodes.get_mut(node_id).expect("Node ID does not exist!")
     }
 
@@ -158,24 +190,24 @@ where
         self.get_node(&0)
     }
 
-    fn add_seq_to_leaves(&mut self, node_id: &usize, string_id: &usize, start: &usize){
-        let mut leaves:Vec<usize> = vec![];
+    fn add_seq_to_leaves(&mut self, node_id: &NodeID, string_id: &StringID, start: &usize){
+        let mut leaves:Vec<NodeID> = vec![];
         self.leaves_of_node(node_id, &mut leaves);
         for leaf in leaves.iter(){
-            self.get_node_mut(leaf).add_seq(string_id, start);
+            self.add_seq_to_node(leaf, string_id, start);
         }
     }
 
-    fn get_treeitem_by_treeitem_id(&self, treeitem_id: &usize)->&(TreeItem<T, U>, usize){
+    fn get_treeitem_by_treeitem_id(&self, treeitem_id: &StringID)->&(TreeItem<T, U>, usize){
         self.strings.get(treeitem_id).expect("TreeItem ID does not exist!")
     }
 
-    fn get_pattern_node(&self, q_string:&[T])->Option<&usize>{
-        let mut node_id: Option<&usize> = Some(&self.root);
+    fn get_pattern_node(&self, q_string:&[T])->Option<&NodeID>{
+        let mut node_id: Option<&NodeID> = Some(&self.root);
         let mut c: &T = &q_string[0];
         let mut i = 0;
         loop {
-            node_id = self.get_node_child_id(node_id.unwrap(), c);
+            node_id = self.get_node_child(node_id.unwrap(), c);
             match node_id{
                 None => return None,
                 Some(n) => {
@@ -192,16 +224,6 @@ where
         }
     }
 
-    /// Checks if the input slice is a suxxif of any of the strings present in the tree.
-    pub fn is_suffix(&self, s:&[T])->bool{
-        let mut query_string: Vec<T> = s.clone().to_vec();
-        query_string.push(self.terminal_character.clone());
-        match self.get_pattern_node(&query_string){
-            None => false,
-            Some(_) => true
-        }
-    }
-
     /// Retrieves all strings that the input slice is a suffix of.
     pub fn suffix_match(&self, s:&[T])-> HashMap<U, HashSet<usize>>{
         let mut query_string: Vec<T> = s.clone().to_vec();
@@ -213,12 +235,12 @@ where
     pub fn substring_match(&self, s:&[T]) -> HashMap<U, HashSet<usize>>{
         let node = self.get_pattern_node(s);
         let mut leaves:Vec<usize> = vec![];
-        let mut ids_and_indexes: HashMap<usize, HashSet<usize>> = HashMap::new();
+        let mut ids_and_indexes: HashMap<StringID, HashSet<usize>> = HashMap::new();
         match node{
             None => {},
             Some(i) => {
                 if self.get_node_depth(i)<s.len(){
-                    match self.get_node_parent_id(i){
+                    match self.get_node_parent(i){
                         None => {},
                         Some(_parent_id) => {self.leaves_of_node(&i, &mut leaves);}
                     }
@@ -229,12 +251,12 @@ where
             }
         }
         for leaf in leaves{
-            for (treeitem_id, idx) in self.get_node(&leaf).get_data(){
+            for (treeitem_id, idx) in self.get_node_data(&leaf){
                 match ids_and_indexes.get_mut(treeitem_id){
                     None => {
                         if self.get_treeitem_by_treeitem_id(treeitem_id).1>=s.len(){
                             ids_and_indexes.insert(treeitem_id.clone(), idx.clone());
-                        }   
+                        }
                     },
                     Some(idxs) => {
                         if self.get_treeitem_by_treeitem_id(treeitem_id).1>=s.len(){
@@ -249,57 +271,50 @@ where
         ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
     }
 
-    fn get_node_children(&self, node_id: &usize)-> &HashMap<T, usize>{
+    fn get_node_children(&self, node_id: &NodeID)-> &HashMap<T, usize>{
         self.get_node(node_id).get_children()
     }
 
-    fn get_node_child_id(&self, node_id: &usize, edge_label: &T)->Option<&usize>{
-        self.get_node(node_id).get_child(edge_label)
-    }
-
-    fn set_node_child_id(&mut self, edge_label: &T, parent_node_id: &usize, child_node_id: &usize){
+    fn set_node_child_id(&mut self, edge_label: &T, parent_node_id: &NodeID, child_node_id: &NodeID){
         self.get_node_mut(parent_node_id).set_child(edge_label.clone(), child_node_id.clone())
     }
 
-    fn get_node_child(&self, node_id: &usize, edge_label: &T)->&Node<T>{
-        self.get_node(self.get_node_child_id(node_id, edge_label).expect("No child!"))
+    fn add_seq_to_node(&mut self, node_id: &NodeID , seq_id: &StringID, start: &usize){
+        self.node_data.entry(node_id.clone()).or_default().entry(seq_id.clone()).or_default().insert(start.clone());
     }
 
-    fn get_node_parent(&self, node_id: &usize)->Option<&Node<T>>{
-        match self.get_node(node_id).get_parent(){
-            None => None,
-            Some(parent_id) => Some(self.get_node(parent_id))
+    fn add_data_to_node(&mut self, node_id: &NodeID, data: HashMap<StringID, HashSet<usize>>){
+        for (seq_id, starts) in data.iter(){
+            for start in starts.iter(){
+                self.add_seq_to_node(node_id, seq_id, start);
+            }
         }
     }
 
-    fn get_node_parent_id(&self, node_id: &usize)->Option<&usize>{
-        self.get_node(node_id).get_parent()
+    fn get_node_data(&self, node_id: &NodeID)->&HashMap<StringID, HashSet<usize>>{
+        self.node_data.get(node_id).expect("Node ID does not exist!")
     }
 
-    fn set_node_parent_id(&mut self, node_id: &usize, parent_id: &usize){
+    fn set_node_parent_id(&mut self, node_id: &NodeID, parent_id: &NodeID){
         self.get_node_mut(node_id).set_parent(parent_id.clone())
     }
 
-    fn node_depth(&self, node_id: &usize, depth: usize)->usize{
+    fn node_depth(&self, node_id: &NodeID, depth: usize)->usize{
         match self.get_node(node_id).get_parent(){
             None => return depth,
             Some(i) => return self.node_depth(i, depth+self.get_node_edge_length(node_id))
         };
     }
 
-    fn get_node_depth(&self, node_id: &usize)->usize{
-        self.node_depth(node_id, 0)
-    }
-
-    fn get_node_start(&self, node_id: &usize)->&usize{
+    fn get_node_start(&self, node_id: &NodeID)->&usize{
         self.get_node(&node_id).get_start()
     }
 
-    fn set_node_start(&mut self, node_id: &usize, start: usize){
+    fn set_node_start(&mut self, node_id: &NodeID, start: usize){
         self.get_node_mut(&node_id).set_start(start)
     }
 
-    fn add_suffix_link(&mut self, node_id: &usize, need_suffix_link: &mut Option<usize>){
+    fn add_suffix_link(&mut self, node_id: &NodeID, need_suffix_link: &mut Option<usize>){
         match need_suffix_link{
             None => (),
             Some(i) => self.set_node_suffix_link(i, node_id),
@@ -320,14 +335,14 @@ where
         };
         
         let new_string: TreeItem<T, U> = TreeItem::new(seq_id, seq.clone());
-        let new_string_id: usize = self.strings.len();
+        let new_string_id: StringID = self.strings.len();
         self.strings.insert(new_string_id.clone(), (new_string, max_depth.clone()));
 
         let mut curr_pos: usize = 0;
         let mut start_idx: usize = 0;
-        let mut need_suffix_link: Option<usize>;
+        let mut need_suffix_link: Option<NodeID>;
         let mut remainder: usize = 0;
-        let mut active_node: usize = 0;
+        let mut active_node: NodeID = 0;
         while curr_pos <= seq.len()-1 {
             need_suffix_link = None;
             remainder += 1;
@@ -336,21 +351,18 @@ where
                 let next_node = self.get_node(&active_node).get_child(active_edge).cloned();
                 match next_node{
                     None => {
-                        let new_leaf_node: Node<T> = Node::new(
+                        let new_leaf_node_id: usize = self.create_node(
                             HashMap::new(),
-                            Some(0),
                             Some(new_string_id),
                             HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
                             Some(active_node.clone()),
                             cmp::min(seq.len()-curr_pos,max_depth-self.get_node_depth(&active_node)),
                             curr_pos.clone(),
                         );
-                        let new_leaf_node_id = self.nodes.len();
-                        self.nodes.insert(new_leaf_node_id.clone(), new_leaf_node);
                         self.set_node_child_id(active_edge, &active_node, &new_leaf_node_id);
                         self.add_suffix_link(&active_node, &mut need_suffix_link);
-                        let active_node_data = self.get_node(&active_node).get_data().clone();
-                        self.get_node_mut(&new_leaf_node_id).add_data(active_node_data);
+                        let active_node_data = self.get_node_data(&active_node).clone();
+                        self.add_data_to_node(&new_leaf_node_id, active_node_data);
                         start_idx += 1;
                     },
                     Some(next_node_id) => {
@@ -370,34 +382,28 @@ where
                             }
                         }
                         else{
-                            let split_node_id = self.nodes.len();
-                            let split_node:Node<T> = Node::new(
-                                    HashMap::from([
-                                        (self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)].clone(), next_node_id.clone())
-                                        ]),
-                                    Some(0),
-                                    Some(self.get_node_string_id(&next_node_id).clone()),
-                                    HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
-                                    Some(active_node.clone()),
-                                    curr_pos-start_idx-self.get_node_depth(&active_node),
-                                    self.get_node_start(&next_node_id).clone(),
-                                    );
-                            self.nodes.insert(split_node_id.clone(), split_node);
+                            let split_node_id: usize = self.create_node(
+                                HashMap::from([
+                                                (self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)].clone(), next_node_id.clone())
+                                                ]),
+                                            Some(self.get_node_string_id(&next_node_id).clone()),
+                                            HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
+                                            Some(active_node.clone()),
+                                            curr_pos-start_idx-self.get_node_depth(&active_node),
+                                            self.get_node_start(&next_node_id).clone(),
+                            );
                             self.set_node_child_id(active_edge, &active_node, &split_node_id);
                             let next_node_new_start = self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node);
                             self.set_node_start(&next_node_id, next_node_new_start);
                             self.set_node_parent_id(&next_node_id, &split_node_id);
-                            let leaf_node: Node<T> = Node::new(
+                            let leaf_node_id: usize = self.create_node(
                                 HashMap::new(),
-                                Some(0),
                                 Some(new_string_id),
                                 HashMap::from([(new_string_id, HashSet::from([(start_idx.clone())]))]),
                                 Some(split_node_id.clone()),
                                 cmp::min(seq.len()-curr_pos, max_depth-self.get_node_depth(&split_node_id)),
                                 curr_pos.clone(),
                             );
-                            let leaf_node_id = self.nodes.len();
-                            self.nodes.insert(leaf_node_id.clone(), leaf_node);
                             self.set_node_child_id(&seq[curr_pos], &split_node_id, &leaf_node_id);
                             self.add_suffix_link(&split_node_id, &mut need_suffix_link);
                             start_idx += 1;
@@ -425,7 +431,12 @@ where
         todo!()
     }
 
-    fn export_node(&self, node_id: &usize)->(Vec<T>, HashMap<T, usize>, HashMap<U, HashSet<usize>>, usize){
+    /// Returns a preorder node iterator of the tree
+    pub fn iter_nodes_pre(&self)->PreOrdNodes<T>{
+        PreOrdNodes::new(&self.root, &self.nodes)
+    }
+
+    fn export_node(&self, node_id: &NodeID)->(Vec<T>, HashMap<T, usize>, HashMap<U, HashSet<usize>>, usize){
         let node = self.get_node(node_id);
         let children: HashMap<T, usize> = node.get_children().clone();
         let start = self.get_node_start(node_id);
@@ -438,7 +449,7 @@ where
             node_label = self.get_node_string(node_id)[start.clone()..start+edge_length].to_vec();
         }
         
-        let data: HashMap<U, HashSet<usize>> = self.get_node_data(node_id);
+        let data: HashMap<U, HashSet<usize>> = self.get_node_match_data(node_id);
         
         return (node_label, children, data, edge_length)
     }
@@ -453,5 +464,133 @@ where
         
         return out_vec;
     }
+
+    pub fn export_all_edges(&self)->Vec<(NodeID, NodeID)>{
+        let mut edges: Vec<(NodeID, NodeID)> = Vec::new();
+        for node_id in self.iter_nodes_pre(){
+            for child_id in self.get_node_children(&node_id).values(){
+                edges.push((node_id.clone(), child_id.clone()))
+            }
+        }
+        for (n1, n2) in self.suffix_links.iter(){
+            if n2!=&0{
+                edges.push((n2.clone(), n1.clone()))
+            }
+        }
+        edges
+    }
     
+}
+
+impl<T, U> SuffixTree<T> for KGST<T, U>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+    U: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+{
+    fn root(&self)->&NodeID{
+        return &self.root;
+    }
+
+    fn is_leaf(&self, node_id: &NodeID)->bool{
+        (!self.get_node(node_id).has_children()) && (self.get_node_parent(node_id)!=None)
+    }
+
+    fn get_node_child(&self, node_id: &NodeID, edge_label: &T)->Option<&NodeID>{
+        self.get_node(node_id).get_child(edge_label)
+    }
+    fn get_node_parent(&self, node_id: &NodeID)->Option<&NodeID>{
+        self.get_node(node_id).get_parent()
+    }
+    fn get_node_depth(&self, node_id: &NodeID)->usize{
+        self.node_depth(node_id, 0)
+    }
+    fn get_suffix_link(&self, node_id: &NodeID) -> &usize{
+        self.suffix_links.get(node_id).expect("Node id does not exist!")
+    }
+    fn get_node_label(&self, node_id: &NodeID)->&[T]{
+        todo!();
+    }
+    fn get_node_path_label(&self, node_id: &NodeID)->&[T]{
+        todo!();
+    }
+    fn get_node_path(&self, node_id: &NodeID)->LinkedList<NodeID>{
+        todo!();
+    }
+
+    fn is_suffix(&self, s:&[T])->bool{
+        let mut query_string: Vec<T> = s.clone().to_vec();
+        query_string.push(self.terminal_character.clone());
+        match self.get_pattern_node(&query_string){
+            None => false,
+            Some(_) => true
+        }
+    }
+}
+
+pub struct PreOrdNodes<T>
+{
+    stack: Vec<NodeID>,
+    nodes: HashMap<NodeID, HashMap<T, NodeID>>
+}
+
+impl<T> PreOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
+        Self { stack:vec![start_node_id.clone()], nodes: nodes.iter().map(|(edge_label, child_node)| {
+            (edge_label.clone(), child_node.get_children().clone())
+        }).collect::<HashMap<NodeID, HashMap<T, NodeID>>>() }
+    }
+}
+
+impl<T> Iterator for PreOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    type Item = NodeID;
+
+    fn next(&mut self)->Option<Self::Item>{
+        if let Some(node_id) = self.stack.pop() {
+            let children_ids:Vec<&NodeID> = self.nodes.get(&node_id).expect("Invalid Node ID!").values().collect();
+            for child_node_id in children_ids.into_iter(){
+                self.stack.push(child_node_id.clone())
+            }
+            return Some(node_id)
+        }
+        return None;
+    }
+}
+
+pub struct Edges<T>{
+    node_iter: PreOrdNodes<T>,
+    s_links: HashMap<NodeID, NodeID>
+}
+
+impl<T> Edges<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>, s_links: HashMap<NodeID, NodeID>)->Self{
+        Self { node_iter: PreOrdNodes::new(start_node_id, nodes), s_links: s_links }
+    }
+}
+
+pub struct PostOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    stack: Vec<NodeID>,
+    nodes: HashMap<NodeID, HashMap<T, NodeID>>
+}
+
+impl<T> PostOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    pub fn new(start_node_id: &NodeID, nodes: HashMap<NodeID, Node<T>>)->Self{
+        Self { stack:vec![start_node_id.clone()], nodes: nodes.iter().map(|(edge_label, child_node)| {
+            (edge_label.clone(), child_node.get_children().clone())
+        }).collect::<HashMap<NodeID, HashMap<T, NodeID>>>() }
+    }
 }
