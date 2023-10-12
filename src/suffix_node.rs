@@ -19,6 +19,7 @@ pub trait SuffixNode<T> {
     fn set_start(&mut self, new_start:usize);
     fn has_children(&self)->bool;
     fn get_children(&self)->&HashMap<T, usize>;
+    fn is_leaf(&self)->bool;
 }
 
 
@@ -114,6 +115,10 @@ where
 
     fn get_children(&self)->&HashMap<T, usize>{
         &self.children
+    }
+
+    fn is_leaf(&self)->bool {
+        self.children.is_empty()
     }
 
 }
