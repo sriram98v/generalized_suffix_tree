@@ -39,12 +39,12 @@ where
     U: Display + Debug + Eq + PartialEq + Hash
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "String ID: {}\n", self.get_id())?;
+        writeln!(f, "String ID: {}", self.get_id())?;
         write!(f, "String: ")?;
         for v in self.get_string() {
             write!(f, "{}", v)?;
         }
-        write!(f, "\n")?;
+        writeln!(f)?;
         Ok(())
     }
 

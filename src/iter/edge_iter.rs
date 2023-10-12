@@ -24,7 +24,7 @@ where
                             .filter(|(_k, v)| v!=&0)
                             .map(|(k, v)| (v, k))
                             .collect(),
-            parents: parents,
+            parents,
             stack: Vec::new()
         }
     }

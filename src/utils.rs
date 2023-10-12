@@ -25,10 +25,10 @@ where
                 slink: Option<usize>,
                 node_id: usize) -> Enode<T, U>{
             Enode{
-                children: children,
-                data: data,
-                node_id: node_id,
-                slink: slink
+                children,
+                data,
+                node_id,
+                slink
             }
         }
 }

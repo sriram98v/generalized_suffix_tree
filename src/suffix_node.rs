@@ -30,11 +30,11 @@ where
                 edge_length: usize,
                 start: usize)->Self{
                     Self {
-                        children: children,
-                        string_id: string_id,
-                        parent: parent,
-                        edge_length: edge_length,
-                        start: start,
+                        children,
+                        string_id,
+                        parent,
+                        edge_length,
+                        start,
                     }
                 }
 }
@@ -90,7 +90,7 @@ where
     }
 
     fn set_start(&mut self, new_start:usize){
-        self.edge_length = self.edge_length-(new_start-self.start);
+        self.edge_length -= new_start-self.start;
         self.start = new_start;
     }
 
