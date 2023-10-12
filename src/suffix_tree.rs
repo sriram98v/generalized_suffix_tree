@@ -7,6 +7,7 @@ use std::hash::Hash;
 use std::cmp;
 use std::option::Option;
 use serde::{Serialize, Deserialize};
+use itertools::Itertools;
 
 type NodeID = usize;
 type StringID = usize;
@@ -24,6 +25,7 @@ pub trait SuffixTree<T>{
     /// Checks if the input slice is a suffix of any of the strings present in the tree.
     fn is_suffix(&self, s:&[T])->bool;
     }
+    
 
 /// A Generalized Truncated Suffix Tree implemented with a variation of Ukkonen's Algorithm.  
 
@@ -99,6 +101,10 @@ where
         for child_node_id in self.get_node_children(node_id).values(){
             self.leaves_of_node(child_node_id, leaves);
         }   
+    }
+
+    pub fn num_nodes(&self)->usize{
+        self.nodes.len()
     }
 
     /// Returns a Hashmap of all the strings present in the tree along with their respective tree depth.
@@ -435,30 +441,36 @@ where
     pub fn iter_nodes_pre(&self)->PreOrdNodes<T>{
         PreOrdNodes::new(&self.root, &self.nodes)
     }
+    
+    /// Returns a preorder node iterator of the tree
+    pub fn iter_nodes_post(&self)->PostOrdNodes<T>{
+        PostOrdNodes::new(&self.root, &self.nodes)
+    }
 
-    fn export_node(&self, node_id: &NodeID)->(Vec<T>, HashMap<T, usize>, HashMap<U, HashSet<usize>>, usize){
+    /// Returns a preorder edge iterator of the tree
+    pub fn iter_edges_post(&self)->PostOrdEdges<T>{
+        PostOrdEdges::new(&self.root, &self.nodes, self.suffix_links.clone(), self.nodes.iter()
+        .map(|(k, v)| (k.clone(), v.get_parent().clone().unwrap_or(&0).clone()))
+        .collect()
+        )
+
+    }
+
+    fn export_node(&self, node_id: &NodeID)->(HashMap<T, usize>, HashMap<U, HashSet<usize>>, Option<usize>){
         let node = self.get_node(node_id);
         let children: HashMap<T, usize> = node.get_children().clone();
-        let start = self.get_node_start(node_id);
-        let edge_length: usize = self.get_node_edge_length(node_id);
-        let node_label: Vec<T>;
-        if node_id==&0{
-            node_label = Vec::new();
-        }
-        else{
-            node_label = self.get_node_string(node_id)[start.clone()..start+edge_length].to_vec();
-        }
+        let s_link: usize = self.get_suffix_link(node_id).clone();
         
         let data: HashMap<U, HashSet<usize>> = self.get_node_match_data(node_id);
         
-        return (node_label, children, data, edge_length)
+        return (children, data, Some(s_link))
     }
 
     pub fn export_all_nodes(&self)->Vec<Enode<T, U>>{
         let mut out_vec: Vec<Enode<T, U>> = Vec::new();
         for node_id in self.nodes.keys(){
             let exp_node_data = self.export_node(node_id);
-            let exp_node = Enode::new(exp_node_data.0, exp_node_data.1, exp_node_data.2, exp_node_data.3, node_id.clone());
+            let exp_node = Enode::new(exp_node_data.0, exp_node_data.1.into_keys().collect(), exp_node_data.2, node_id.clone());
             out_vec.push(exp_node);
         }
         
@@ -492,7 +504,7 @@ where
     }
 
     fn is_leaf(&self, node_id: &NodeID)->bool{
-        (!self.get_node(node_id).has_children()) && (self.get_node_parent(node_id)!=None)
+        self.get_node(node_id).is_leaf()
     }
 
     fn get_node_child(&self, node_id: &NodeID, edge_label: &T)->Option<&NodeID>{
@@ -551,34 +563,20 @@ where
     type Item = NodeID;
 
     fn next(&mut self)->Option<Self::Item>{
-        if let Some(node_id) = self.stack.pop() {
-            let children_ids:Vec<&NodeID> = self.nodes.get(&node_id).expect("Invalid Node ID!").values().collect();
-            for child_node_id in children_ids.into_iter(){
-                self.stack.push(child_node_id.clone())
+        match self.stack.pop() {
+            Some(node_id) => {
+                let children_ids:Vec<&NodeID> = self.nodes.get(&node_id).expect("Invalid Node ID!").values().collect();
+                for child_node_id in children_ids.into_iter().sorted(){
+                    self.stack.push(child_node_id.clone())
             }
             return Some(node_id)
-        }
-        return None;
-    }
-}
-
-pub struct Edges<T>{
-    node_iter: PreOrdNodes<T>,
-    s_links: HashMap<NodeID, NodeID>
-}
-
-impl<T> Edges<T>
-where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
-{
-    pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>, s_links: HashMap<NodeID, NodeID>)->Self{
-        Self { node_iter: PreOrdNodes::new(start_node_id, nodes), s_links: s_links }
+            }
+            None => return None,
+        };
     }
 }
 
 pub struct PostOrdNodes<T>
-where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
 {
     stack: Vec<NodeID>,
     nodes: HashMap<NodeID, HashMap<T, NodeID>>
@@ -588,9 +586,83 @@ impl<T> PostOrdNodes<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone
 {
-    pub fn new(start_node_id: &NodeID, nodes: HashMap<NodeID, Node<T>>)->Self{
+    pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
         Self { stack:vec![start_node_id.clone()], nodes: nodes.iter().map(|(edge_label, child_node)| {
             (edge_label.clone(), child_node.get_children().clone())
         }).collect::<HashMap<NodeID, HashMap<T, NodeID>>>() }
+    }
+}
+
+impl<T> Iterator for PostOrdNodes<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    type Item = NodeID;
+
+    fn next(&mut self)->Option<Self::Item>{
+        while let Some(node_id) = self.stack.pop()  {
+            if self.nodes.contains_key(&node_id){
+                self.stack.push(node_id.clone());
+                let children = self.nodes.remove(&node_id).unwrap();
+                for child_id in children.values().sorted(){
+                    self.stack.push(child_id.clone())
+                }
+            }
+            else{
+                return Some(node_id)
+            }
+        }
+        return None;
+    }
+}
+
+pub struct PostOrdEdges<T>
+{
+    node_iter: PostOrdNodes<T>,
+    s_links: HashMap<NodeID, NodeID>,
+    parents: HashMap<NodeID, NodeID>,
+    stack: Vec<(NodeID, NodeID)>
+}
+
+impl<T> PostOrdEdges<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>, s_links: HashMap<NodeID, NodeID>, parents: HashMap<NodeID, NodeID>)->Self{
+        Self {
+            node_iter: PostOrdNodes::new(start_node_id, nodes),
+            s_links: s_links.into_iter()
+                            .filter(|(_k, v)| !(v==&0))
+                            .map(|(k, v)| (v, k))
+                            .collect(),
+            parents: parents,
+            stack: Vec::new()
+        }
+    }
+}
+
+impl<T> Iterator for PostOrdEdges<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    type Item = (NodeID, NodeID);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.stack.pop(){
+            Some(edge) => return Some(edge),
+            None => {
+                match self.node_iter.next(){
+                    Some(node_id) => {
+                        let node_id_parent = self.parents.get(&node_id).unwrap();
+                        match self.s_links.get(&node_id){
+                            Some(slink_node_id) => self.stack.push((slink_node_id.clone(), node_id.clone())),
+                            None => {}
+                        }
+                        return Some((node_id_parent.clone(), node_id));
+                    },
+                    None => return None
+                }
+            }
+        };
     }
 }
