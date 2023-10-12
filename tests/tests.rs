@@ -49,6 +49,35 @@ fn serialize_deserialize_tree(){
 }
 
 #[test]
+fn preorder_nodes(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "abcabxabcd".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.insert(item_id.clone(), item_string.clone(), &0);
+    assert_eq!(tree.iter_nodes_pre().collect::<Vec<usize>>(), vec![0, 16, 15, 13, 14, 3, 8, 6, 11, 12, 2, 7, 4, 9, 10, 1, 5]);
+}
+
+#[test]
+fn postorder_nodes(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "abcabxabcd".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.insert(item_id.clone(), item_string.clone(), &0);
+    let node_post = tree.iter_nodes_post();
+    assert_eq!(node_post.collect::<Vec<usize>>(), vec![16, 15, 14, 3, 13, 8, 12, 2, 11, 7, 6, 10, 1, 9, 5, 4, 0]);
+}
+
+#[test]
+fn postorder_edges(){
+    let mut tree: KGST<char, String> = KGST::new('$');
+    let item_string:Vec<char> = "abcabxabcd".chars().collect();
+    let item_id:String = "World".to_string();
+    tree.insert(item_id.clone(), item_string.clone(), &0);
+    let edge_post = tree.iter_edges_post();
+    dbg!(edge_post.collect::<Vec<(usize, usize)>>());
+}
+
+#[test]
 fn export_all_nodes(){
     let mut tree: KGST<char, String> = KGST::new('$');
     let string_set: Vec<Vec<char>> = vec![
