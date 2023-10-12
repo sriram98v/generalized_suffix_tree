@@ -1,8 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::hash::Hash;
-use std::cmp;
 use std::fmt::{Display, Debug};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Enode<T, U>
@@ -10,11 +9,10 @@ where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
     U: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    node_label: Vec<T>,
     children: HashMap<T, usize>,
-    data: HashMap<U, HashSet<usize>>,
-    edge_length: usize,
-    node_id: usize
+    data: Vec<U>,
+    node_id: usize,
+    slink: Option<usize>
 }
 
 impl<T, U> Enode<T, U>
@@ -22,17 +20,15 @@ where
     T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
     U: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
 {
-    pub fn new(node_label: Vec<T>,
-        children: HashMap<T, usize>,
-        data: HashMap<U, HashSet<usize>>,
-        edge_length: usize,
-        node_id: usize) -> Enode<T, U>{
+    pub fn new(children: HashMap<T, usize>,
+                data: Vec<U>,
+                slink: Option<usize>,
+                node_id: usize) -> Enode<T, U>{
             Enode{
-                node_label: node_label,
                 children: children,
                 data: data,
-                edge_length: edge_length,
-                node_id: node_id
+                node_id: node_id,
+                slink: slink
             }
         }
 }
