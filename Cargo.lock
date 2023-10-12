@@ -485,6 +485,7 @@ dependencies = [
  "clap",
  "error-chain",
  "indicatif",
+ "itertools",
  "serde",
  "serde_json",
 ]
