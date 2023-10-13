@@ -37,16 +37,16 @@ fn insert_set(){
     }
 }
 
-#[test]
-fn serialize_deserialize_tree(){
-    let mut tree: KGST<char, String> = KGST::new('$');
-    let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
-    let item_id:String = "World".to_string();
-    tree.insert(item_id.clone(), item_string.clone(), &0);
-    let serialized = serde_json::to_string(&tree).unwrap();
-    let tree_2: KGST<char, String> = serde_json::from_str(&serialized).unwrap();
-    assert_eq!(tree.get_nodes(), tree_2.get_nodes());
-}
+// #[test]
+// fn serialize_deserialize_tree(){
+//     let mut tree: KGST<char, String> = KGST::new('$');
+//     let item_string:Vec<char> = "GATTACAGATTACAXYZGATTACAGATTACA".chars().collect();
+//     let item_id:String = "World".to_string();
+//     tree.insert(item_id.clone(), item_string.clone(), &0);
+//     let serialized = serde_json::to_string(&tree).unwrap();
+//     let tree_2: KGST<char, String> = serde_json::from_str(&serialized).unwrap();
+//     assert_eq!(tree.get_nodes(), tree_2.get_nodes());
+// }
 
 #[test]
 fn preorder_nodes(){

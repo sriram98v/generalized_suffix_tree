@@ -11,12 +11,12 @@ use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::cmp;
 use std::option::Option;
-use serde::{Serialize, Deserialize};
+use serde::ser::{Serialize, Serializer, SerializeStruct};
     
 
 /// A Generalized Truncated Suffix Tree implemented with a variation of Ukkonen's Algorithm.  
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct KGST<T, U>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
@@ -29,6 +29,27 @@ where
     leaves: Vec<NodeID>,
     suffix_links: HashMap<NodeID, NodeID>,
     node_data: HashMap<NodeID, HashMap<StringID, HashSet<usize>>>
+}
+
+impl<T, U> Serialize for KGST<T, U> 
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+    U: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("KGST", 7)?;
+        state.serialize_field("root", &self.root)?;
+        state.serialize_field("nodes", &self.nodes)?;
+        state.serialize_field("terminal_character", &self.terminal_character)?;
+        state.serialize_field("strings", &self.strings)?;
+        state.serialize_field("leaves", &self.leaves)?;
+        state.serialize_field("suffix_links", &self.suffix_links)?;
+        state.serialize_field("node_data", &self.node_data)?;
+        state.end()
+    }
 }
 
 
@@ -134,7 +155,7 @@ where
             }
 
     fn set_node_suffix_link(&mut self, node_id: &NodeID, suffix_link_node_id: &NodeID){
-        self.suffix_links.entry(*node_id).and_modify(|e| *e=*suffix_link_node_id).or_insert(*suffix_link_node_id);
+        self.suffix_links.entry(*node_id).and_modify(|e| *e *= suffix_link_node_id).or_insert(*suffix_link_node_id);
     }
 
     fn get_string_by_treeitem_id(&self, treeitem_id: &StringID)->&Vec<T>{
@@ -155,11 +176,6 @@ where
 
     fn get_node_mut(&mut self, node_id: &NodeID)->&mut Node<T>{
         self.nodes.get_mut(node_id).expect("Node ID does not exist!")
-    }
-
-    /// Retrieves the root of the tree
-    pub fn get_root(&self)->&Node<T>{
-        self.get_node(&0)
     }
 
     fn add_seq_to_leaves(&mut self, node_id: &NodeID, string_id: &StringID, start: &usize){
@@ -198,7 +214,7 @@ where
 
     /// Retrieves all strings that the input slice is a suffix of.
     pub fn suffix_match(&self, s:&[T])-> HashMap<U, HashSet<usize>>{
-        let mut query_string: Vec<T> = s.clone().to_vec();
+        let mut query_string: Vec<T> = s.to_vec();
         query_string.push(self.terminal_character.clone());
         self.substring_match(&query_string)
     }
@@ -459,7 +475,7 @@ where
     }
 
     fn is_suffix(&self, s:&[T])->bool{
-        let mut query_string: Vec<T> = s.clone().to_vec();
+        let mut query_string: Vec<T> = s.to_vec();
         query_string.push(self.terminal_character.clone());
         self.get_pattern_node(&query_string).is_some()
     }
