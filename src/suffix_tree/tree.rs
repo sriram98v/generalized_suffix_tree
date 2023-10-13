@@ -10,7 +10,8 @@ pub trait SuffixTree<T>{
     fn get_suffix_link(&self, node_id: &NodeID) -> &usize;
     fn get_node_label(&self, node_id: &NodeID)->&[T];
     fn get_node_path_label(&self, node_id: &NodeID)->&[T];
-    fn get_node_path(&self, node_id: &NodeID)->LinkedList<NodeID>;
+    fn get_node_path_pre(&self, node_id: &NodeID)->LinkedList<NodeID>;
+    fn get_node_path_post(&self, node_id: &NodeID)->LinkedList<NodeID>;
     /// Checks if the input slice is a suffix of any of the strings present in the tree.
     fn is_suffix(&self, s:&[T])->bool;
     }

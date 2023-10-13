@@ -2,8 +2,11 @@ extern crate clap;
 
 use clap::{arg, Command};
 use bio::io::fasta;
+use generalized_suffix_tree::data::tree_item::TreeItem;
 use generalized_suffix_tree::suffix_tree::KGST;
+use generalized_suffix_tree::suffix_tree::tree::SuffixTree;
 use indicatif::{ProgressBar, ProgressStyle};
+use itertools::Itertools;
 use std::fs::File;
 use std::io::Write;
 
@@ -48,13 +51,37 @@ fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>
     tree
 }
 
-fn save_tree_edges(tree: &mut KGST<char, String>, output_path: String){
+fn save_tree(tree: KGST<char, String>, output_path: String){
     println!("Saving tree nodes to {}.", &output_path);
     let edge_iter = tree.iter_edges_post();
-    println!("Writing nodes");
     let mut f = File::create(output_path).expect("Unable to create file");
+    writeln!(f, "start kgst").expect("Write failed");
+    writeln!(f, "start edges").expect("Write failed");
     for (n1, n2) in edge_iter{
-        writeln!(f, "{} {}", n1, n2).expect("Write failed");
+        writeln!(f, "{}->{}; {}", n1, n2, tree.get_node_label(&n2).iter().map(|x| format!("{}", x)).collect::<String>()).expect("Write failed");
+    }
+    writeln!(f, "end").expect("Write failed");
+    println!("Saved");
+}
+
+fn _node_sim(tree: KGST<char, String>, output_path: String){
+    println!("Saving tree strings to {}.", &output_path);
+    let string_iter = tree.iter_strings();
+    let pb = ProgressBar::new(string_iter.len() as u64);
+    pb.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})")
+        .unwrap()
+        .progress_chars("#>-"));
+    let mut f = File::create(output_path).expect("Unable to create file");
+    writeln!(f, "ID,node_values").expect("Write failed");
+    for (_itemid, (item, _depth)) in string_iter{
+        let mut node_values: Vec<u8> = vec![0; tree.num_nodes()];
+        for node_id in item.get_nodes().iter(){
+            for path_node in tree.get_node_path_pre(node_id).iter(){
+                node_values[*path_node] = 1;
+            }
+        }
+        writeln!(f, "{},{}", item.get_id(), node_values.iter().map(|i| format!("{}", i)).collect::<String>()).expect("Write failed");
+        pb.inc(1);
     }
     println!("Saved");
 }
@@ -87,12 +114,12 @@ fn main(){
 
         match matches.subcommand(){
             Some(("build",  sub_m)) => {
-                let mut tree: KGST<char, String> = build_tree(
+                let tree: KGST<char, String> = build_tree(
                     sub_m.get_one::<String>("source").expect("required").as_str(), 
                     sub_m.get_one::<usize>("num").expect("required"), 
                     sub_m.get_one::<usize>("depth").expect("required")
                 );
-                save_tree_edges(&mut tree, sub_m.get_one::<String>("out").expect("required").to_string());
+                save_tree(tree, sub_m.get_one::<String>("out").expect("required").to_string());
             },
             _ => {
                 println!("Either build a tree or query an existing tree. Refer help page (-h flag)");

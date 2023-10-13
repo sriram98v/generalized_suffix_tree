@@ -289,7 +289,7 @@ where
         }
     }
 
-    fn get_node_data(&self, node_id: &NodeID)->&HashMap<StringID, HashSet<usize>>{
+    pub fn get_node_data(&self, node_id: &NodeID)->&HashMap<StringID, HashSet<usize>>{
         self.node_data.get(node_id).expect("Node ID does not exist!")
     }
 
@@ -444,8 +444,14 @@ where
         PostOrdNodes::new(&self.root, &self.nodes)
     }
 
+    /// Returns the nodes in a path in preorder
     pub fn iter_path_pre(&self, node_id: &NodeID)->std::collections::linked_list::IntoIter<usize>{
-        self.get_node_path(node_id).into_iter()
+        self.get_node_path_pre(node_id).into_iter()
+    }
+
+    /// Returns the nodes in a path in postorder
+    pub fn iter_path_post(&self, node_id: &NodeID)->std::collections::linked_list::IntoIter<usize>{
+        self.get_node_path_post(node_id).into_iter()
     }
 
     /// Returns a postorder edge iterator of the tree
@@ -483,14 +489,16 @@ where
     fn get_suffix_link(&self, node_id: &NodeID) -> &usize{
         self.suffix_links.get(node_id).expect("Node id does not exist!")
     }
-    fn get_node_label(&self, _node_id: &NodeID)->&[T]{
-        todo!();
+    fn get_node_label(&self, node_id: &NodeID)->&[T]{
+        let node_edge_length  = self.get_node_edge_length(node_id);
+        let node_start = self.get_node_start(node_id).clone();
+        &self.get_string_by_treeitem_id(self.get_node_string_id(node_id))[node_start..node_start+node_edge_length]
     }
     fn get_node_path_label(&self, _node_id: &NodeID)->&[T]{
         todo!();
     }
 
-    fn get_node_path(&self, node_id: &NodeID)->LinkedList<NodeID>{
+    fn get_node_path_pre(&self, node_id: &NodeID)->LinkedList<NodeID>{
         let mut node_path: LinkedList<NodeID> = LinkedList::new();
         let mut curr_node_id: usize = node_id.clone();
         while self.get_node_parent(&curr_node_id).expect("Invalid NodeID! Path is broken")!=&0{
@@ -500,7 +508,18 @@ where
         node_path.push_front(curr_node_id);
         node_path.push_front(0);
         node_path
+    }
 
+    fn get_node_path_post(&self, node_id: &NodeID)->LinkedList<NodeID>{
+        let mut node_path: LinkedList<NodeID> = LinkedList::new();
+        let mut curr_node_id: usize = node_id.clone();
+        while self.get_node_parent(&curr_node_id).expect("Invalid NodeID! Path is broken")!=&0{
+            node_path.push_front(curr_node_id.clone());
+            curr_node_id = self.get_node_parent(&curr_node_id).cloned().expect("Invalid NodeID! Path is broken");
+        }
+        node_path.push_back(curr_node_id);
+        node_path.push_back(0);
+        node_path
     }
 
     fn is_suffix(&self, s:&[T])->bool{
