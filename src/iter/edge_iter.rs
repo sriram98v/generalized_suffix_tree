@@ -43,10 +43,7 @@ where
                 match self.node_iter.next(){
                     Some(node_id) => {
                         let node_id_parent = self.parents.get(&node_id).unwrap();
-                        match self.s_links.get(&node_id){
-                            Some(slink_node_id) => self.stack.push((*slink_node_id, node_id)),
-                            None => {}
-                        }
+                        if let Some(slink_node_id) = self.s_links.get(&node_id) { self.stack.push((*slink_node_id, node_id)) }
                         Some((*node_id_parent, node_id))
                     },
                     None => None
