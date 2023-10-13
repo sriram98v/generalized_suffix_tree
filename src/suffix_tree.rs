@@ -444,6 +444,10 @@ where
         PostOrdNodes::new(&self.root, &self.nodes)
     }
 
+    pub fn iter_path_pre(&self, node_id: &NodeID)->std::collections::linked_list::IntoIter<usize>{
+        self.get_node_path(node_id).into_iter()
+    }
+
     /// Returns a postorder edge iterator of the tree
     pub fn iter_edges_post(&self)->PostOrdEdges<T>{
         PostOrdEdges::new(&self.root, &self.nodes, self.suffix_links.clone(), self.nodes.iter()
@@ -485,8 +489,18 @@ where
     fn get_node_path_label(&self, _node_id: &NodeID)->&[T]{
         todo!();
     }
-    fn get_node_path(&self, _node_id: &NodeID)->LinkedList<NodeID>{
-        todo!();
+
+    fn get_node_path(&self, node_id: &NodeID)->LinkedList<NodeID>{
+        let mut node_path: LinkedList<NodeID> = LinkedList::new();
+        let mut curr_node_id: usize = node_id.clone();
+        while self.get_node_parent(&curr_node_id).expect("Invalid NodeID! Path is broken")!=&0{
+            node_path.push_front(curr_node_id.clone());
+            curr_node_id = self.get_node_parent(&curr_node_id).cloned().expect("Invalid NodeID! Path is broken");
+        }
+        node_path.push_front(curr_node_id);
+        node_path.push_front(0);
+        node_path
+
     }
 
     fn is_suffix(&self, s:&[T])->bool{
