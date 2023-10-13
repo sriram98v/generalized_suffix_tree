@@ -3,7 +3,7 @@ pub mod tree;
 use crate::suffix_tree::tree::*;
 use crate::suffix_node::node::*;
 use crate::suffix_node::*;
-use crate::tree_item::TreeItem;
+use crate::data::TreeItem;
 use crate::iter::node_iter::*;
 use crate::iter::edge_iter::*;
 use std::collections::{HashMap, HashSet, LinkedList};

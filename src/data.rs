@@ -1,7 +1,10 @@
+pub mod tree_item;
+
 use std::fmt;
 use core::fmt::{Debug, Display};
 use std::hash::Hash;
 use serde::{Serialize, Deserialize};
+
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TreeItem<T, U>
@@ -19,7 +22,7 @@ where
     T: Display + Debug + Eq + PartialEq + Hash,
     U: Display + Debug + Eq + PartialEq + Hash
 {
-    pub fn new(k: U, v: Vec<T>)->TreeItem<T, U>{
+    pub fn new(k: U, v: Vec<T>)->Self{
         TreeItem { string: v, id: k }
     }
 
