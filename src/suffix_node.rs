@@ -254,7 +254,7 @@ where
             }
         }
 
-        const FIELDS: &'static [&'static str] = &["children", "string_id", "parent", "edge_length", "start"];
+        const FIELDS: &[&str] = &["children", "string_id", "parent", "edge_length", "start"];
         deserializer.deserialize_struct("Node", FIELDS, DurationVisitor::<T>(PhantomData::<T>))
     }
 }

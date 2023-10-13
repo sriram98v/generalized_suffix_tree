@@ -4,6 +4,8 @@ use std::fmt;
 use core::fmt::{Debug, Display};
 use std::hash::Hash;
 use serde::{Serialize, Deserialize};
+use crate::data::tree_item::TreeItem as OtherTreeItem;
+use crate::suffix_node::node::NodeID;
 
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
@@ -14,24 +16,33 @@ where
 {
     string: Vec<T>,
     id: U,
+    nodes: Vec<NodeID>,
 }
 
 
-impl<T, U> TreeItem<T, U> 
+impl<T, U> OtherTreeItem<T, U> for TreeItem<T, U> 
 where
     T: Display + Debug + Eq + PartialEq + Hash,
     U: Display + Debug + Eq + PartialEq + Hash
 {
-    pub fn new(k: U, v: Vec<T>)->Self{
-        TreeItem { string: v, id: k }
+    fn new(k: U, v: Vec<T>)->Self{
+        TreeItem { string: v, id: k , nodes: vec![]}
     }
 
-    pub fn get_string(&self) -> &Vec<T>{
+    fn get_string(&self) -> &Vec<T>{
         &self.string
     }
 
-    pub fn get_id(&self) -> &U{
+    fn get_id(&self) -> &U{
         &self.id
+    }
+
+    fn get_nodes(&self) -> &Vec<NodeID> {
+        &self.nodes
+    }
+
+    fn add_data_to_node(&mut self, node_id: &NodeID) {
+        self.nodes.push(*node_id)
     }
 }
 

@@ -4,6 +4,7 @@ use crate::suffix_tree::tree::*;
 use crate::suffix_node::node::*;
 use crate::suffix_node::*;
 use crate::data::TreeItem;
+use crate::data::tree_item::TreeItem as OtherTreeItem;
 use crate::iter::node_iter::*;
 use crate::iter::edge_iter::*;
 use std::collections::{HashMap, HashSet, LinkedList};
@@ -267,8 +268,17 @@ where
         self.get_node_mut(parent_node_id).set_child(edge_label.clone(), *child_node_id)
     }
 
+    fn get_mut_treeitem_by_treeitem_id(&mut self, treeitem_id: &StringID)-> &mut TreeItem<T, U>{
+        &mut self.strings.get_mut(treeitem_id).expect("TreeItem does not exist!").0
+    }
+
+    fn add_node_to_treeitem(&mut self, treeitem_id: &StringID, node_id: &NodeID){
+        self.get_mut_treeitem_by_treeitem_id(treeitem_id).add_data_to_node(node_id)
+    }
+
     fn add_seq_to_node(&mut self, node_id: &NodeID , seq_id: &StringID, start: &usize){
         self.node_data.entry(*node_id).or_default().entry(*seq_id).or_default().insert(*start);
+        self.add_node_to_treeitem(seq_id, node_id);
     }
 
     fn add_data_to_node(&mut self, node_id: &NodeID, data: HashMap<StringID, HashSet<usize>>){
