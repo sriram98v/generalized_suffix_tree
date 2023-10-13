@@ -1,14 +1,18 @@
 pub mod node;
 
-use std::collections::HashMap;
-use std::fmt::{Display, Debug};
-use std::hash::Hash;
-use std::option::Option;
-use serde::{Serialize, Deserialize};
 use crate::suffix_node::node::*;
 
+use std::collections::HashMap;
+use std::marker::PhantomData;
+use std::fmt::{Display, Debug};
+use std::fmt;
+use std::hash::Hash;
+use std::option::Option;
+use serde::ser::{Serialize, Serializer, SerializeStruct};
+use serde::de::{self, Deserialize, Deserializer, Visitor, SeqAccess, MapAccess};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+
+#[derive(Debug)]
 pub struct Node<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
@@ -106,4 +110,151 @@ where
         self.children.is_empty()
     }
 
+}
+
+impl<T> Serialize for Node<T> 
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Node", 5)?;
+        state.serialize_field("children", &self.children)?;
+        state.serialize_field("string_id", &self.string_id)?;
+        state.serialize_field("parent", &self.parent)?;
+        state.serialize_field("edge_length", &self.edge_length)?;
+        state.serialize_field("start", &self.start)?;
+        state.end()
+    }
+}
+
+impl<'de, T> Deserialize<'de> for Node<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize + Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        enum Field { Children, StringID, Parent, EdgeLength, Start }
+
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                struct FieldVisitor;
+
+                impl<'de> Visitor<'de> for FieldVisitor {
+                    type Value = Field;
+
+                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                        formatter.write_str("`children` or `string_id` or `parent` or `edge_length` or `start`")
+                    }
+
+                    fn visit_str<E>(self, value: &str) -> Result<Field, E>
+                    where
+                        E: de::Error,
+                    {
+                        match value {
+                            "children" => Ok(Field::Children),
+                            "string_id" => Ok(Field::StringID),
+                            "parent" => Ok(Field::Parent),
+                            "edge_length" => Ok(Field::EdgeLength),
+                            "start" => Ok(Field::Start),
+                            _ => Err(de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct DurationVisitor<K>(PhantomData<K>);
+
+        impl<'de, K> Visitor<'de> for DurationVisitor<K> 
+        where
+            K: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize + Deserialize<'de>
+        {
+            type Value = Node<K>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct Node")
+            }
+
+            fn visit_seq<V>(self, mut seq: V) -> Result<Node<K>, V::Error>
+            where
+                V: SeqAccess<'de>,
+            {
+                let children = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let string_id = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                let parent = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let edge_length = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                let start = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;                
+                Ok(Node::new(children, string_id, parent, edge_length, start))
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<Node<K>, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut children = None;
+                let mut string_id = None;
+                let mut parent = None;
+                let mut edge_length = None;
+                let mut start = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Children => {
+                            if children.is_some() {
+                                return Err(de::Error::duplicate_field("children"));
+                            }
+                            children = Some(map.next_value()?);
+                        }
+                        Field::StringID => {
+                            if string_id.is_some() {
+                                return Err(de::Error::duplicate_field("string_id"));
+                            }
+                            string_id = Some(map.next_value()?);
+                        }
+                        Field::Parent => {
+                            if parent.is_some() {
+                                return Err(de::Error::duplicate_field("parent"));
+                            }
+                            parent = Some(map.next_value()?);
+                        }
+                        Field::EdgeLength => {
+                            if edge_length.is_some() {
+                                return Err(de::Error::duplicate_field("edge_length"));
+                            }
+                            edge_length = Some(map.next_value()?);
+                        }
+                        Field::Start => {
+                            if start.is_some() {
+                                return Err(de::Error::duplicate_field("start"));
+                            }
+                            start = Some(map.next_value()?);
+                        }
+                    }
+                }
+                let children = children.ok_or_else(|| de::Error::missing_field("children"))?;
+                let string_id = string_id.ok_or_else(|| de::Error::missing_field("string_id"))?;
+                let parent = parent.ok_or_else(|| de::Error::missing_field("parent"))?;
+                let edge_length = edge_length.ok_or_else(|| de::Error::missing_field("edge_length"))?;
+                let start = start.ok_or_else(|| de::Error::missing_field("start"))?;
+                Ok(Node::new(children, string_id, parent, edge_length, start))
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["children", "string_id", "parent", "edge_length", "start"];
+        deserializer.deserialize_struct("Node", FIELDS, DurationVisitor::<T>(PhantomData::<T>))
+    }
 }
