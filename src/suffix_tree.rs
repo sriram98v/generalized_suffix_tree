@@ -424,6 +424,11 @@ where
         string_ids.contains(string_id)
     }
 
+    /// Returns a string iterator of the tree
+    pub fn iter_strings(&self)-> std::collections::hash_map::Iter<'_, usize, (TreeItem<T, U>, usize)>{
+        self.strings.iter()
+    }
+
     /// Prints tree as a string.
     pub fn print_tree(&self){
         todo!()
