@@ -148,7 +148,7 @@ fn main(){
                 }
             },
             _ => {
-                println!("Either build a tree or query an existing tree. Refer help page (-h flag)");
+                println!("No option selected! Refer help page (-h flag)");
             }
         }
 }
