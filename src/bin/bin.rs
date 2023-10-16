@@ -6,7 +6,6 @@ use generalized_suffix_tree::data::tree_item::TreeItem;
 use generalized_suffix_tree::suffix_tree::KGST;
 use generalized_suffix_tree::suffix_tree::tree::SuffixTree;
 use indicatif::{ProgressBar, ProgressStyle};
-use itertools::Itertools;
 use std::fs::File;
 use std::io::Write;
 
@@ -51,7 +50,18 @@ fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>
     tree
 }
 
-fn save_tree(tree: KGST<char, String>, output_path: String){
+fn save_tree_edges(tree: &KGST<char, String>, output_path: String){
+    println!("Saving tree nodes to {}.", &output_path);
+    let edge_iter = tree.iter_edges_post();
+    println!("Writing nodes");
+    let mut f = File::create(output_path).expect("Unable to create file");
+    for (n1, n2) in edge_iter{
+        writeln!(f, "{} {}", n1, n2).expect("Write failed");
+    }
+    println!("Saved");
+}
+
+fn save_tree(tree: &KGST<char, String>, output_path: String){
     println!("Saving tree nodes to {}.", &output_path);
     let edge_iter = tree.iter_edges_post();
     let mut f = File::create(output_path).expect("Unable to create file");
@@ -64,7 +74,7 @@ fn save_tree(tree: KGST<char, String>, output_path: String){
     println!("Saved");
 }
 
-fn _node_sim(tree: KGST<char, String>, output_path: String){
+fn node_sim(tree: &KGST<char, String>, output_path: String){
     println!("Saving tree strings to {}.", &output_path);
     let string_iter = tree.iter_strings();
     let pb = ProgressBar::new(string_iter.len() as u64);
@@ -108,6 +118,14 @@ fn main(){
                 .required(true)
                 .value_parser(clap::value_parser!(usize))
                 )
+            .arg(arg!(--network "Export edges as network topology")
+                .required(false)
+                .value_parser(clap::value_parser!(bool))
+                )
+            .arg(arg!(--sim "Export node values per string")
+                .required(false)
+                .value_parser(clap::value_parser!(bool))
+                )
         )
         .about("CLI tool to build and serialize K-Truncated Generalized Suffix trees")
         .get_matches();
@@ -119,7 +137,15 @@ fn main(){
                     sub_m.get_one::<usize>("num").expect("required"), 
                     sub_m.get_one::<usize>("depth").expect("required")
                 );
-                save_tree(tree, sub_m.get_one::<String>("out").expect("required").to_string());
+                if sub_m.get_flag("network"){
+                    save_tree_edges(&tree, sub_m.get_one::<String>("out").expect("required").to_string());
+                }
+                else if sub_m.get_flag("sim"){
+                    node_sim(&tree, sub_m.get_one::<String>("out").expect("required").to_string());
+                }
+                else{
+                    save_tree(&tree, sub_m.get_one::<String>("out").expect("required").to_string());
+                }
             },
             _ => {
                 println!("Either build a tree or query an existing tree. Refer help page (-h flag)");
