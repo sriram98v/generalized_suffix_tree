@@ -1,5 +1,6 @@
 pub mod node;
 
+use crate::data::tree_item::Character;
 use crate::suffix_node::node::*;
 
 use std::collections::HashMap;
@@ -17,7 +18,7 @@ pub struct Node<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    children: HashMap<T, usize>,
+    children: HashMap<Character<T>, usize>,
     string_id: Option<usize>,
     parent: Option<usize>,
     edge_length: usize,
@@ -28,7 +29,7 @@ impl<T> Node<T>
 where
     T: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
-    pub fn new(children: HashMap<T, usize>,
+    pub fn new(children: HashMap<Character<T>, usize>,
                 string_id: Option<usize>,
                 parent: Option<usize>,
                 edge_length: usize,
@@ -57,15 +58,15 @@ where
     }
 
 
-    fn get_child(&self, child:&T)->Option<&usize>{
+    fn get_child(&self, child:&Character<T>)->Option<&usize>{
         self.children.get(child)
     }
 
-    fn get_child_mut(&mut self, child:&T)->Option<&mut usize>{
+    fn get_child_mut(&mut self, child:&Character<T>)->Option<&mut usize>{
         self.children.get_mut(child)
     }
     
-    fn set_child(&mut self, edge:T, child:usize){
+    fn set_child(&mut self, edge:Character<T>, child:usize){
         self.children.insert(edge, child);
     }
 
@@ -102,7 +103,7 @@ where
         !self.children.is_empty()
     }
 
-    fn get_children(&self)->&HashMap<T, usize>{
+    fn get_children(&self)->&HashMap<Character<T>, usize>{
         &self.children
     }
 

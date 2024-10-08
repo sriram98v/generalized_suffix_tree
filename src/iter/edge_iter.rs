@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::fmt::{Display, Debug};
 
-pub struct PostOrdEdges<T>
+pub struct PostOrdEdges<T: PartialEq + Display + Debug>
 {
     node_iter: PostOrdNodes<T>,
     s_links: HashMap<NodeID, NodeID>,
@@ -27,6 +27,10 @@ where
             parents,
             stack: Vec::new()
         }
+    }
+
+    pub fn len(&self)->usize{
+        self.parents.len()+self.s_links.len()-1
     }
 }
 

@@ -1,5 +1,6 @@
 pub mod tree;
 
+use crate::data::tree_item::Character;
 use crate::suffix_tree::tree::*;
 use crate::suffix_node::node::*;
 use crate::suffix_node::*;
@@ -12,6 +13,7 @@ use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::cmp;
 use std::option::Option;
+use itertools::Itertools;
 use serde::ser::{Serialize, Serializer, SerializeStruct};
     
 
@@ -131,11 +133,11 @@ where
     }
 
     /// Returns the string represented by the incoming edge of the node.
-    pub fn get_node_label(&self, node_id: &NodeID)->&[T]{
+    pub fn get_node_label(&self, node_id: &NodeID)->&[Character<T>]{
         return &self.get_node_string(node_id)[*self.get_node_start(node_id)..self.get_node_start(node_id)+(self.get_node_edge_length(node_id))]
     }
 
-    fn create_node(&mut self, children: HashMap<T, usize>,
+    fn create_node(&mut self, children: HashMap<Character<T>, usize>,
             string_id: Option<usize>,
             data: HashMap<StringID, HashSet<usize>>,
             parent: Option<usize>,
@@ -159,7 +161,7 @@ where
         self.suffix_links.entry(*node_id).and_modify(|e| *e *= suffix_link_node_id).or_insert(*suffix_link_node_id);
     }
 
-    fn get_string_by_treeitem_id(&self, treeitem_id: &StringID)->&Vec<T>{
+    fn get_string_by_treeitem_id(&self, treeitem_id: &StringID)->&[Character<T>]{
         self.strings.get(treeitem_id).expect("TreeItem ID does not exist!").0.get_string()
     }
 
@@ -167,7 +169,7 @@ where
         self.get_node(node_id).get_edge_length()
     }
 
-    fn get_node_string(&self, node_id: &NodeID)->&Vec<T>{
+    fn get_node_string(&self, node_id: &NodeID)->&[Character<T>]{
         self.get_string_by_treeitem_id(self.get_node_string_id(node_id))
     }
 
@@ -193,6 +195,7 @@ where
 
     fn get_pattern_node(&self, q_string:&[T])->Option<&NodeID>{
         let mut node_id: Option<&NodeID> = Some(&self.root);
+        // dbg!(q_string);
         let mut c: &T = &q_string[0];
         let mut i = 0;
         loop {
@@ -260,11 +263,11 @@ where
         ids_and_indexes.into_iter().map(|(k, v)| (self.strings.get(&k).cloned().unwrap().0.get_id().clone(), v)).collect::<HashMap<U, HashSet<usize>>>()
     }
 
-    fn get_node_children(&self, node_id: &NodeID)-> &HashMap<T, usize>{
+    fn get_node_children(&self, node_id: &NodeID)-> &HashMap<Character<T>, usize>{
         self.get_node(node_id).get_children()
     }
 
-    fn set_node_child_id(&mut self, edge_label: &T, parent_node_id: &NodeID, child_node_id: &NodeID){
+    fn set_node_child_id(&mut self, edge_label: &Character<T>, parent_node_id: &NodeID, child_node_id: &NodeID){
         self.get_node_mut(parent_node_id).set_child(edge_label.clone(), *child_node_id)
     }
 
@@ -345,8 +348,8 @@ where
             need_suffix_link = None;
             remainder += 1;
             while remainder > 0{
-                let active_edge = &seq[start_idx+self.get_node_depth(&active_node)].clone();
-                let next_node = self.get_node(&active_node).get_child(active_edge).cloned();
+                let active_edge = Character::Char(seq[start_idx+self.get_node_depth(&active_node)].clone());
+                let next_node = self.get_node(&active_node).get_child(&active_edge).cloned();
                 match next_node{
                     None => {
                         let new_leaf_node_id: usize = self.create_node(
@@ -357,7 +360,7 @@ where
                             cmp::min(seq.len()-curr_pos,max_depth-self.get_node_depth(&active_node)),
                             curr_pos,
                         );
-                        self.set_node_child_id(active_edge, &active_node, &new_leaf_node_id);
+                        self.set_node_child_id(&active_edge, &active_node, &new_leaf_node_id);
                         self.add_suffix_link(&active_node, &mut need_suffix_link);
                         let active_node_data = self.get_node_data(&active_node).clone();
                         self.add_data_to_node(&new_leaf_node_id, active_node_data);
@@ -369,7 +372,7 @@ where
                             active_node = next_node_id;
                             continue;
                         }
-                        else if self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)] == seq[curr_pos]{   
+                        else if self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)] == Character::Char(seq[curr_pos].clone()){   
                             self.add_seq_to_leaves(&next_node_id, &new_string_id, &start_idx);
                             if curr_pos==seq.len()-1{
                                 start_idx+=1;
@@ -390,7 +393,7 @@ where
                                             curr_pos-start_idx-self.get_node_depth(&active_node),
                                             *self.get_node_start(&next_node_id),
                             );
-                            self.set_node_child_id(active_edge, &active_node, &split_node_id);
+                            self.set_node_child_id(&active_edge, &active_node, &split_node_id);
                             let next_node_new_start = self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node);
                             self.set_node_start(&next_node_id, next_node_new_start);
                             self.set_node_parent_id(&next_node_id, &split_node_id);
@@ -402,7 +405,7 @@ where
                                 cmp::min(seq.len()-curr_pos, max_depth-self.get_node_depth(&split_node_id)),
                                 curr_pos,
                             );
-                            self.set_node_child_id(&seq[curr_pos], &split_node_id, &leaf_node_id);
+                            self.set_node_child_id(&Character::Char(seq[curr_pos].clone()), &split_node_id, &leaf_node_id);
                             self.add_suffix_link(&split_node_id, &mut need_suffix_link);
                             start_idx += 1;
                         }
@@ -478,7 +481,7 @@ where
     }
 
     fn get_node_child(&self, node_id: &NodeID, edge_label: &T)->Option<&NodeID>{
-        self.get_node(node_id).get_child(edge_label)
+        self.get_node(node_id).get_child(&Character::Char(edge_label.clone()))
     }
     fn get_node_parent(&self, node_id: &NodeID)->Option<&NodeID>{
         self.get_node(node_id).get_parent()
@@ -489,10 +492,11 @@ where
     fn get_suffix_link(&self, node_id: &NodeID) -> &usize{
         self.suffix_links.get(node_id).expect("Node id does not exist!")
     }
-    fn get_node_label(&self, node_id: &NodeID)->&[T]{
+    fn get_node_label(&self, node_id: &NodeID)->Vec<T>{
         let node_edge_length  = self.get_node_edge_length(node_id);
         let node_start = self.get_node_start(node_id).clone();
-        &self.get_string_by_treeitem_id(self.get_node_string_id(node_id))[node_start..node_start+node_edge_length]
+        let string  = self.get_string_by_treeitem_id(self.get_node_string_id(node_id))[node_start..node_start+node_edge_length].iter();
+        return string.map(|x| x.into_inner().cloned().expect("Terminal Character cannot be unwrapped!")).collect_vec()
     }
     fn get_node_path_label(&self, _node_id: &NodeID)->&[T]{
         todo!();

@@ -3,18 +3,18 @@ pub mod tree_item;
 use std::fmt;
 use core::fmt::{Debug, Display};
 use std::hash::Hash;
+use itertools::Itertools;
 use serde::{Serialize, Deserialize};
-use crate::data::tree_item::TreeItem as OtherTreeItem;
+use crate::data::tree_item::{TreeItem as OtherTreeItem, Character};
 use crate::suffix_node::node::NodeID;
-
 
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TreeItem<T, U>
 where
-    T: Display + Debug + Eq + PartialEq + Hash,
-    U: Display + Debug + Eq + PartialEq + Hash
+    T: Display + Debug + PartialEq + Hash,
+    U: Display + Debug + PartialEq + Hash
 {
-    string: Vec<T>,
+    string: Vec<Character<T>>,
     id: U,
     nodes: Vec<NodeID>,
 }
@@ -26,19 +26,19 @@ where
     U: Display + Debug + Eq + PartialEq + Hash
 {
     fn new(k: U, v: Vec<T>)->Self{
-        TreeItem { string: v, id: k , nodes: vec![]}
+        TreeItem { string: v.into_iter().map(|x| Character::Char(x)).collect_vec(), id: k , nodes: vec![]}
     }
 
-    fn get_string(&self) -> &Vec<T>{
-        &self.string
+    fn get_string<'a>(&'a self) -> &'a [Character<T>]{
+        self.string.as_slice()
     }
 
-    fn get_id(&self) -> &U{
+    fn get_id<'a>(&'a self) -> &'a U{
         &self.id
     }
 
-    fn get_nodes(&self) -> &Vec<NodeID> {
-        &self.nodes
+    fn get_nodes(&self) -> impl ExactSizeIterator<Item= &NodeID>{
+        self.nodes.iter()
     }
 
     fn add_data_to_node(&mut self, node_id: &NodeID) {

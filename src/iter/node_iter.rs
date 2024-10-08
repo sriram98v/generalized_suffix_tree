@@ -2,14 +2,52 @@ use crate::suffix_node::node::*;
 use crate::suffix_node::Node;
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::fmt::{Display, Debug};
+use crate::data::tree_item::Character;
+use core::fmt::{Debug, Display};
 use itertools::Itertools;
 
-
-pub struct PreOrdNodes<T>
+pub struct EulerWalk<T: PartialEq + Display + Debug>
 {
     stack: Vec<NodeID>,
-    nodes: HashMap<NodeID, HashMap<T, NodeID>>
+    nodes: HashMap<NodeID, HashMap<Character<T>, NodeID>>
+}
+
+impl<T> EulerWalk<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
+        Self { stack:vec![*start_node_id], nodes: nodes.iter().map(|(edge_label, child_node)| {
+            (*edge_label, child_node.get_children().clone())
+        }).collect::<HashMap<NodeID, HashMap<Character<T>, NodeID>>>() }
+    }
+}
+
+impl<T> Iterator for EulerWalk<T>
+where
+    T: Display + Debug + Eq + PartialEq + Hash + Clone
+{
+    type Item = NodeID;
+
+    fn next(&mut self)->Option<Self::Item>{
+        match self.stack.pop() {
+            Some(node_id) => {
+                let children_ids:Vec<&NodeID> = self.nodes.get(&node_id).expect("Invalid Node ID!").values().collect();
+                for child_node_id in children_ids.into_iter().sorted(){
+                    self.stack.push(*child_node_id);
+                    self.stack.push(node_id.clone());
+            }
+            Some(node_id)
+            }
+            None => None,
+        }
+    }
+}
+
+pub struct PreOrdNodes<T: PartialEq + Display + Debug>
+{
+    stack: Vec<NodeID>,
+    nodes: HashMap<NodeID, HashMap<Character<T>, NodeID>>
 }
 
 impl<T> PreOrdNodes<T>
@@ -19,7 +57,7 @@ where
     pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
         Self { stack:vec![*start_node_id], nodes: nodes.iter().map(|(edge_label, child_node)| {
             (*edge_label, child_node.get_children().clone())
-        }).collect::<HashMap<NodeID, HashMap<T, NodeID>>>() }
+        }).collect::<HashMap<NodeID, HashMap<Character<T>, NodeID>>>() }
     }
 }
 
@@ -43,10 +81,10 @@ where
     }
 }
 
-pub struct PostOrdNodes<T>
+pub struct PostOrdNodes<T: PartialEq + Display + Debug>
 {
     stack: Vec<NodeID>,
-    nodes: HashMap<NodeID, HashMap<T, NodeID>>
+    nodes: HashMap<NodeID, HashMap<Character<T>, NodeID>>
 }
 
 impl<T> PostOrdNodes<T>
@@ -56,7 +94,7 @@ where
     pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
         Self { stack:vec![*start_node_id], nodes: nodes.iter().map(|(edge_label, child_node)| {
             (*edge_label, child_node.get_children().clone())
-        }).collect::<HashMap<NodeID, HashMap<T, NodeID>>>() }
+        }).collect::<HashMap<NodeID, HashMap<Character<T>, NodeID>>>() }
     }
 }
 

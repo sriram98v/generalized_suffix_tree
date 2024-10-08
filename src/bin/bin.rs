@@ -8,12 +8,16 @@ use generalized_suffix_tree::suffix_tree::tree::SuffixTree;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 
 fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>{
     println!("Building tree from {}", file);
     let reader = fasta::Reader::from_file(file).expect("File node found!");
 
-    let total_size = reader.records().count();
+    let total_size = match num_seq{
+        &0 => {reader.records().count()},
+        _ => {*num_seq},
+    };
 
     let pb = ProgressBar::new(total_size as u64);
     pb.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})")
@@ -51,17 +55,23 @@ fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>
 }
 
 fn save_tree_edges(tree: &KGST<char, String>, output_path: String){
-    println!("Saving tree nodes to {}.", &output_path);
     let edge_iter = tree.iter_edges_post();
-    println!("Writing nodes");
-    let mut f = File::create(output_path).expect("Unable to create file");
+    let mut outfile = PathBuf::from(output_path);
+    outfile.set_extension("network");
+    println!("Saving tree nodes to {}.", &outfile.to_string_lossy());
+    let pb = ProgressBar::new(edge_iter.len() as u64);
+    pb.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})")
+        .unwrap()
+        .progress_chars("#>-"));
+    let mut f = File::create(outfile).expect("Unable to create file");
     for (n1, n2) in edge_iter{
         writeln!(f, "{} {}", n1, n2).expect("Write failed");
+        pb.inc(1);
     }
     println!("Saved");
 }
 
-fn save_tree(tree: &KGST<char, String>, output_path: String){
+fn _save_tree(tree: &KGST<char, String>, output_path: String){
     println!("Saving tree nodes to {}.", &output_path);
     let edge_iter = tree.iter_edges_post();
     let mut f = File::create(output_path).expect("Unable to create file");
@@ -75,17 +85,19 @@ fn save_tree(tree: &KGST<char, String>, output_path: String){
 }
 
 fn node_sim(tree: &KGST<char, String>, output_path: String){
-    println!("Saving tree strings to {}.", &output_path);
     let string_iter = tree.iter_strings();
     let pb = ProgressBar::new(string_iter.len() as u64);
     pb.set_style(ProgressStyle::with_template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})")
         .unwrap()
         .progress_chars("#>-"));
-    let mut f = File::create(output_path).expect("Unable to create file");
+    let mut outfile = PathBuf::from(output_path);
+    outfile.set_extension("node_sim");
+    println!("Saving tree nodes to {}.", &outfile.to_string_lossy());
+    let mut f = File::create(outfile).expect("Unable to create file");
     writeln!(f, "ID,node_values").expect("Write failed");
     for (_itemid, (item, _depth)) in string_iter{
         let mut node_values: Vec<u8> = vec![0; tree.num_nodes()];
-        for node_id in item.get_nodes().iter(){
+        for node_id in item.get_nodes(){
             for path_node in tree.get_node_path_pre(node_id).iter(){
                 node_values[*path_node] = 1;
             }
@@ -106,13 +118,9 @@ fn main(){
             .arg(arg!(-s --source <SRC_FILE> "Source file with sequences(fasta)")
                 .required(true)
                 )
-            .arg(arg!(-o --out <SAVE_FILE> "save file")
-                .required(true)
-                )
             .arg(arg!(-d --depth <MAX_DEPTH> "max depth of output tree. (0==length of longest string)")
                 .required(true)
                 .value_parser(clap::value_parser!(usize))
-
                 )
             .arg(arg!(-n --num <NUM_SEQ> "Number of seq. (0==all)")
                 .required(true)
@@ -138,14 +146,14 @@ fn main(){
                     sub_m.get_one::<usize>("depth").expect("required")
                 );
                 if sub_m.get_flag("network"){
-                    save_tree_edges(&tree, sub_m.get_one::<String>("out").expect("required").to_string());
+                    save_tree_edges(&tree, sub_m.get_one::<String>("source").expect("required").to_string());
                 }
-                else if sub_m.get_flag("sim"){
-                    node_sim(&tree, sub_m.get_one::<String>("out").expect("required").to_string());
+                if sub_m.get_flag("sim"){
+                    node_sim(&tree, sub_m.get_one::<String>("source").expect("required").to_string());
                 }
-                else{
-                    save_tree(&tree, sub_m.get_one::<String>("out").expect("required").to_string());
-                }
+                // else{
+                //     save_tree(&tree, sub_m.get_one::<String>("out").expect("required").to_string());
+                // }
             },
             _ => {
                 println!("No option selected! Refer help page (-h flag)");
