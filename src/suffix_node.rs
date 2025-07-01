@@ -16,7 +16,7 @@ use serde::de::{self, Deserialize, Deserializer, Visitor, SeqAccess, MapAccess};
 #[derive(Debug)]
 pub struct Node<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd,
 {
     children: HashMap<Character<T>, usize>,
     string_id: Option<usize>,
@@ -27,7 +27,7 @@ where
 
 impl<T> Node<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd,
 {
     pub fn new(children: HashMap<Character<T>, usize>,
                 string_id: Option<usize>,
@@ -46,7 +46,7 @@ where
 
 impl<T> SuffixNode<T> for Node<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd,
 {
 
     fn set_parent(&mut self, parent: usize){
@@ -115,7 +115,7 @@ where
 
 impl<T> Serialize for Node<T> 
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize + PartialOrd,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -133,7 +133,7 @@ where
 
 impl<'de, T> Deserialize<'de> for Node<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize + Deserialize<'de>,
+    T: Display + Debug + Eq + PartialEq + PartialOrd + Hash + Clone + Serialize + Deserialize<'de>,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -148,7 +148,7 @@ where
             {
                 struct FieldVisitor;
 
-                impl<'de> Visitor<'de> for FieldVisitor {
+                impl Visitor<'_> for FieldVisitor {
                     type Value = Field;
 
                     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -178,7 +178,7 @@ where
 
         impl<'de, K> Visitor<'de> for DurationVisitor<K> 
         where
-            K: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize + Deserialize<'de>
+            K: Display + Debug + Eq + PartialEq + PartialOrd + Hash + Clone + Serialize + Deserialize<'de>
         {
             type Value = Node<K>;
 

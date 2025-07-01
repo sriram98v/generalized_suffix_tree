@@ -6,7 +6,7 @@ use crate::data::tree_item::Character;
 use core::fmt::{Debug, Display};
 use itertools::Itertools;
 
-pub struct EulerWalk<T: PartialEq + Display + Debug>
+pub struct EulerWalk<T: PartialEq + Display + Debug + PartialOrd>
 {
     stack: Vec<NodeID>,
     nodes: HashMap<NodeID, HashMap<Character<T>, NodeID>>
@@ -14,7 +14,7 @@ pub struct EulerWalk<T: PartialEq + Display + Debug>
 
 impl<T> EulerWalk<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
+    T: Display + Debug + Eq + PartialEq + PartialOrd + Hash + Clone
 {
     pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
         Self { stack:vec![*start_node_id], nodes: nodes.iter().map(|(edge_label, child_node)| {
@@ -25,7 +25,7 @@ where
 
 impl<T> Iterator for EulerWalk<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd
 {
     type Item = NodeID;
 
@@ -35,7 +35,7 @@ where
                 let children_ids:Vec<&NodeID> = self.nodes.get(&node_id).expect("Invalid Node ID!").values().collect();
                 for child_node_id in children_ids.into_iter().sorted(){
                     self.stack.push(*child_node_id);
-                    self.stack.push(node_id.clone());
+                    self.stack.push(node_id);
             }
             Some(node_id)
             }
@@ -44,7 +44,7 @@ where
     }
 }
 
-pub struct PreOrdNodes<T: PartialEq + Display + Debug>
+pub struct PreOrdNodes<T: PartialEq + Display + Debug + PartialOrd>
 {
     stack: Vec<NodeID>,
     nodes: HashMap<NodeID, HashMap<Character<T>, NodeID>>
@@ -52,7 +52,7 @@ pub struct PreOrdNodes<T: PartialEq + Display + Debug>
 
 impl<T> PreOrdNodes<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd
 {
     pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
         Self { stack:vec![*start_node_id], nodes: nodes.iter().map(|(edge_label, child_node)| {
@@ -63,7 +63,7 @@ where
 
 impl<T> Iterator for PreOrdNodes<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd
 {
     type Item = NodeID;
 
@@ -81,7 +81,7 @@ where
     }
 }
 
-pub struct PostOrdNodes<T: PartialEq + Display + Debug>
+pub struct PostOrdNodes<T: PartialEq + Display + Debug + PartialOrd>
 {
     stack: Vec<NodeID>,
     nodes: HashMap<NodeID, HashMap<Character<T>, NodeID>>
@@ -89,7 +89,7 @@ pub struct PostOrdNodes<T: PartialEq + Display + Debug>
 
 impl<T> PostOrdNodes<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd
 {
     pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>)->Self{
         Self { stack:vec![*start_node_id], nodes: nodes.iter().map(|(edge_label, child_node)| {
@@ -100,7 +100,7 @@ where
 
 impl<T> Iterator for PostOrdNodes<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd
 {
     type Item = NodeID;
 

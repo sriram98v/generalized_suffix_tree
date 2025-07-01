@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::fmt::{Display, Debug};
 
-pub struct PostOrdEdges<T: PartialEq + Display + Debug>
+pub struct PostOrdEdges<T: PartialEq + Display + Debug + PartialOrd>
 {
     node_iter: PostOrdNodes<T>,
     s_links: HashMap<NodeID, NodeID>,
@@ -15,7 +15,7 @@ pub struct PostOrdEdges<T: PartialEq + Display + Debug>
 
 impl<T> PostOrdEdges<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd
 {
     pub fn new(start_node_id: &NodeID, nodes: &HashMap<NodeID, Node<T>>, s_links: HashMap<NodeID, NodeID>, parents: HashMap<NodeID, NodeID>)->Self{
         Self {
@@ -32,11 +32,15 @@ where
     pub fn len(&self)->usize{
         self.parents.len()+self.s_links.len()-1
     }
+
+    pub fn is_empty(&self)->bool{
+        self.len()==0
+    }
 }
 
 impl<T> Iterator for PostOrdEdges<T>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd
 {
     type Item = (NodeID, NodeID);
 

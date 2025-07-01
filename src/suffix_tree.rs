@@ -22,7 +22,7 @@ use serde::ser::{Serialize, Serializer, SerializeStruct};
 #[derive(Debug)]
 pub struct KGST<T, U>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + PartialOrd,
     U: Display + Debug + Eq + PartialEq + Hash + Clone,
 {
     root: usize,
@@ -36,7 +36,7 @@ where
 
 impl<T, U> Serialize for KGST<T, U> 
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize + PartialOrd,
     U: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -58,7 +58,7 @@ where
 
 impl<T, U> KGST<T, U> 
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize + PartialOrd,
     U: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
 {
     /// Creates a new empty K-Truncated Generalized Suffix tree, with a constant end symbol. 
@@ -134,7 +134,7 @@ where
 
     /// Returns the string represented by the incoming edge of the node.
     pub fn get_node_label(&self, node_id: &NodeID)->&[Character<T>]{
-        return &self.get_node_string(node_id)[*self.get_node_start(node_id)..self.get_node_start(node_id)+(self.get_node_edge_length(node_id))]
+        &self.get_node_string(node_id)[*self.get_node_start(node_id)..self.get_node_start(node_id)+(self.get_node_edge_length(node_id))]
     }
 
     fn create_node(&mut self, children: HashMap<Character<T>, usize>,
@@ -469,7 +469,7 @@ where
 
 impl<T, U> SuffixTree<T> for KGST<T, U>
 where
-    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
+    T: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize + PartialOrd,
     U: Display + Debug + Eq + PartialEq + Hash + Clone + Serialize,
 {
     fn root(&self)->&NodeID{
@@ -494,9 +494,9 @@ where
     }
     fn get_node_label(&self, node_id: &NodeID)->Vec<T>{
         let node_edge_length  = self.get_node_edge_length(node_id);
-        let node_start = self.get_node_start(node_id).clone();
+        let node_start = *self.get_node_start(node_id);
         let string  = self.get_string_by_treeitem_id(self.get_node_string_id(node_id))[node_start..node_start+node_edge_length].iter();
-        return string.map(|x| x.into_inner().cloned().expect("Terminal Character cannot be unwrapped!")).collect_vec()
+        string.map(|x| x.into_inner().cloned().expect("Terminal Character cannot be unwrapped!")).collect_vec()
     }
     fn get_node_path_label(&self, _node_id: &NodeID)->&[T]{
         todo!();
@@ -504,9 +504,9 @@ where
 
     fn get_node_path_pre(&self, node_id: &NodeID)->LinkedList<NodeID>{
         let mut node_path: LinkedList<NodeID> = LinkedList::new();
-        let mut curr_node_id: usize = node_id.clone();
+        let mut curr_node_id: usize = *node_id;
         while self.get_node_parent(&curr_node_id).expect("Invalid NodeID! Path is broken")!=&0{
-            node_path.push_front(curr_node_id.clone());
+            node_path.push_front(curr_node_id);
             curr_node_id = self.get_node_parent(&curr_node_id).cloned().expect("Invalid NodeID! Path is broken");
         }
         node_path.push_front(curr_node_id);
@@ -516,9 +516,9 @@ where
 
     fn get_node_path_post(&self, node_id: &NodeID)->LinkedList<NodeID>{
         let mut node_path: LinkedList<NodeID> = LinkedList::new();
-        let mut curr_node_id: usize = node_id.clone();
+        let mut curr_node_id: usize = *node_id;
         while self.get_node_parent(&curr_node_id).expect("Invalid NodeID! Path is broken")!=&0{
-            node_path.push_front(curr_node_id.clone());
+            node_path.push_front(curr_node_id);
             curr_node_id = self.get_node_parent(&curr_node_id).cloned().expect("Invalid NodeID! Path is broken");
         }
         node_path.push_back(curr_node_id);

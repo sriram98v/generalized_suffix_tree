@@ -7,7 +7,7 @@ pub type StringID = usize;
 
 pub trait SuffixNode<T> 
 where
-    T: PartialEq + Display + Debug
+    T: PartialEq + Display + Debug + PartialOrd
 {
     fn set_parent(&mut self, parent: NodeID);
     fn get_parent(&self)->Option<&NodeID>;

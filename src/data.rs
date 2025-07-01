@@ -11,7 +11,7 @@ use crate::suffix_node::node::NodeID;
 #[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
 pub struct TreeItem<T, U>
 where
-    T: Display + Debug + PartialEq + Hash,
+    T: Display + Debug + PartialEq + PartialOrd,
     U: Display + Debug + PartialEq + Hash
 {
     string: Vec<Character<T>>,
@@ -22,14 +22,14 @@ where
 
 impl<T, U> OtherTreeItem<T, U> for TreeItem<T, U> 
 where
-    T: Display + Debug + Eq + PartialEq + Hash,
+    T: Display + Debug + Eq + PartialEq + PartialOrd,
     U: Display + Debug + Eq + PartialEq + Hash
 {
     fn new(k: U, v: Vec<T>)->Self{
         TreeItem { string: v.into_iter().map(|x| Character::Char(x)).collect_vec(), id: k , nodes: vec![]}
     }
 
-    fn get_string<'a>(&'a self) -> &'a [Character<T>]{
+    fn get_string(&self) -> &[Character<T>]{
         self.string.as_slice()
     }
 
@@ -49,7 +49,7 @@ where
 
 impl<T, U> Display for TreeItem<T, U> 
 where
-    T: Display + Debug + Eq + PartialEq + Hash,
+    T: Display + Debug + Eq + PartialEq + PartialOrd + Hash,
     U: Display + Debug + Eq + PartialEq + Hash
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

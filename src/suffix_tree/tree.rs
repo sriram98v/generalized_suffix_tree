@@ -17,7 +17,7 @@ pub trait SuffixTree<T>{
     fn is_suffix(&self, s:&[T])->bool;
     }
 
-pub trait Tree<T: PartialEq + Display + Debug>{
+pub trait Tree<T: PartialEq + Display + Debug + PartialOrd>{
     fn iter_nodes_pre(&self, node_id: &NodeID)->PreOrdNodes<Character<T>>;
     fn mrca(&self, nodes: Vec<NodeID>)->&NodeID;
     fn leaf_pairwise_mrca_matrix(&self)->Vec<Vec<&NodeID>>;
