@@ -26,8 +26,8 @@ fn insert_set(){
         "MKAIIVVVLLYTFTTANADTLCIGYHANNSTDTVDTVLEKNVTVTHSVNLLKNRHNGKLCKLRGVAPLHLGKCNIAGWLLGNPECEPLSTASSWAYIVETSNSDNGTCYPGDFINYEELTEHLSSVSSFERFEIFPKTNSWPNHDTNKGVTAACPHAGTNSFYRNGIWLVKKENIYPKKSKSYKNKKKKEVLVLWAIHHPSTSADQQSLYQNADAYVFVGSSRYSRKFEPEIATRPKVRDQAGRMNYYWTLVEPGDKITFEATGNLVAPRYAFALKRNSGSGIIISDTSVHDCDTTCQTPNGAINTSLPFQNIHPVTIGECPKYVKSTKLRMATGLRNIPSIQSRGLFGAIAGFIEGGWTGMIDGWYGYHHQNEQGSGYAADLKSTQNAIDGITNKVNSVIEKMNTQFTAVGKEFSHLERRIENLNKKVDDGFLDIWTYNAELLVLLENERTLDYHDSNVKNLYEKVRSQLKNNAKEIGNGCFEFYHKCDDMCMESVKNGTYDYPKYSEEAKLNREEIDGVKLESTRIYQILAIYSTVASSLVLVVSLGAISFWMCSNGSLQCRICI".to_string().chars().collect(), 
         "MKAIIVVYLLHLQTATYADTLCIGYHANNSTDTVDTVLEKNVTVTHSVNLLENRHNGKLCKLRGVAPLHLGKCNIAGWLLGNPECESLSTASSWSYIVETSNSDNGTCYPGDFINYEELREQLSSVSSFERFEIFPKTSSWPNHDTNRGVTAACPHAGTNSFYRNLVWLVKKGNSYPKINKSYINNKEKEVLVLWAIHHPSTSADQQSLYQNADAYVFVGSSRYSKKFEPEIATRPKVRDQAGRMNYYWTLVEPGDKITFEATGNLVAPRYAFALKRNSGSGIIISDTSVHDCDTTCQTPNGAINTSLPFQNIHPVTIGECPKYVKSTKLRMATGLRNIPSIQSRGLFGAIAGFIEGGWTGMIDGWYGYHHQNEQGSGYAADLKSTQNAIDGITNKVNSVIEKMNTQFTAVGKEFSHLERRIENLNKKVDDGFLDIWTYNAELLVLLENERTLDYHDSNVKNLYEKVRSQLKNNAKEIGNGCFEFYHKCDDMCMESVKNGTYDYPKYSEEAKLNREGIDGVKLESTRIYQILAIYSTVASSLVLVVSLGAISFWMCSNGSLQCRICI".to_string().chars().collect(), 
     ];
-    for item_idx in 0..string_set.len(){
-        tree.insert(item_idx.to_string(), string_set[item_idx].clone(), &0);
+    for (item_idx, item) in string_set.iter().enumerate(){
+        tree.insert(item_idx.to_string(), item.clone(), &0);
     }
     for item_idx in 0..string_set.len(){
         for string_idx in 0..string_set[item_idx].len()-1{
@@ -131,16 +131,16 @@ fn insert_set_trunc(){
         "MKAIIVVYLLHLQTATYADTLCIGYHANNSTDTVDTVLEKNVTVTHSVNLLENRHNGKLCKLRGVAPLHLGKCNIAGWLLGNPECESLSTASSWSYIVETSNSDNGTCYPGDFINYEELREQLSSVSSFERFEIFPKTSSWPNHDTNRGVTAACPHAGTNSFYRNLVWLVKKGNSYPKINKSYINNKEKEVLVLWAIHHPSTSADQQSLYQNADAYVFVGSSRYSKKFEPEIATRPKVRDQAGRMNYYWTLVEPGDKITFEATGNLVAPRYAFALKRNSGSGIIISDTSVHDCDTTCQTPNGAINTSLPFQNIHPVTIGECPKYVKSTKLRMATGLRNIPSIQSRGLFGAIAGFIEGGWTGMIDGWYGYHHQNEQGSGYAADLKSTQNAIDGITNKVNSVIEKMNTQFTAVGKEFSHLERRIENLNKKVDDGFLDIWTYNAELLVLLENERTLDYHDSNVKNLYEKVRSQLKNNAKEIGNGCFEFYHKCDDMCMESVKNGTYDYPKYSEEAKLNREGIDGVKLESTRIYQILAIYSTVASSLVLVVSLGAISFWMCSNGSLQCRICI".to_string().chars().collect(), 
     ];
     let max_depth: usize = 3;
-    for item_idx in 0..string_set.len(){
-        tree.insert(item_idx.to_string(), string_set[item_idx].clone(), &max_depth);
+    for (item_idx, item) in string_set.iter().enumerate(){
+        tree.insert(item_idx.to_string(), item.clone(), &max_depth);
     }
-    for item_idx in 0..string_set.len(){
+    for (item_idx, item) in string_set.iter().enumerate(){
         for string_idx in 0..string_set[item_idx].len()-max_depth{
-            let substring_match = tree.substring_match(&string_set[item_idx][string_idx..string_idx+max_depth]);
+            let substring_match = tree.substring_match(&item[string_idx..string_idx+max_depth]);
             assert!(substring_match.get(&item_idx.to_string()).expect("suffix not found!").contains(&string_idx));
         }
         for string_idx in 0..string_set[item_idx].len()-max_depth{
-            let substring_match = tree.substring_match(&string_set[item_idx][string_idx..string_idx+max_depth+1]);
+            let substring_match = tree.substring_match(&item[string_idx..string_idx+max_depth+1]);
             assert_eq!(substring_match.get(&item_idx.to_string()), None);
         }
     }

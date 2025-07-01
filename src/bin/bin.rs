@@ -7,7 +7,7 @@ use generalized_suffix_tree::suffix_tree::KGST;
 use generalized_suffix_tree::suffix_tree::tree::SuffixTree;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::fs::File;
-use std::io::Write;
+use std::{io::Write, fmt::Write as Otherwrite};
 use std::path::PathBuf;
 
 fn build_tree(file:&str, num_seq: &usize, max_depth: &usize)->KGST<char, String>{
@@ -78,7 +78,10 @@ fn _save_tree(tree: &KGST<char, String>, output_path: String){
     writeln!(f, "start kgst").expect("Write failed");
     writeln!(f, "start edges").expect("Write failed");
     for (n1, n2) in edge_iter{
-        writeln!(f, "{}->{}; {}", n1, n2, tree.get_node_label(&n2).iter().map(|x| format!("{}", x)).collect::<String>()).expect("Write failed");
+        writeln!(f, "{}->{}; {}", n1, n2, tree.get_node_label(&n2).iter().fold(String::new(), |mut output, x| {
+            let _  = write!(output, "{x}");
+            output
+        })).expect("Write failed");
     }
     writeln!(f, "end").expect("Write failed");
     println!("Saved");
@@ -102,7 +105,10 @@ fn node_sim(tree: &KGST<char, String>, output_path: String){
                 node_values[*path_node] = 1;
             }
         }
-        writeln!(f, "{},{}", item.get_id(), node_values.iter().map(|i| format!("{}", i)).collect::<String>()).expect("Write failed");
+        writeln!(f, "{},{}", item.get_id(), node_values.iter().fold(String::new(), |mut output, i| {
+            let _  = write!(output, "{i}");
+            output
+        })).expect("Write failed");
         pb.inc(1);
     }
     println!("Saved");
