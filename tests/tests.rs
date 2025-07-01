@@ -29,9 +29,9 @@ fn insert_set(){
     for (item_idx, item) in string_set.iter().enumerate(){
         tree.insert(item_idx.to_string(), item.clone(), &0);
     }
-    for item_idx in 0..string_set.len(){
-        for string_idx in 0..string_set[item_idx].len()-1{
-            let suffix_match = tree.suffix_match(&string_set[item_idx][string_idx..]);
+    for (item_idx, item) in string_set.iter().enumerate(){
+            for string_idx in 0..string_set[item_idx].len()-1{
+            let suffix_match = tree.suffix_match(&item[string_idx..]);
             assert!(suffix_match.get(&item_idx.to_string()).expect("suffix not found!").contains(&string_idx));
         }
     }
