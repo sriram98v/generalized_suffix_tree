@@ -33,7 +33,7 @@ where
         self.string.as_slice()
     }
 
-    fn get_id<'a>(&'a self) -> &'a U{
+    fn get_id(&self) -> &U{
         &self.id
     }
 
