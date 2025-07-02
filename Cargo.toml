@@ -19,7 +19,7 @@ readme = "README.md"
 homepage = "https://github.com/sriram98v/generalized_suffix_tree"
 repository = "https://github.com/sriram98v/generalized_suffix_tree"
 keywords = ["lib"]
-categories = ["library", "data-structures"]
+categories = ["data-structures"]
 
 [features]
 default = ["non_crypto_hash"]
