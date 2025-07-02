@@ -1,4 +1,8 @@
+#[cfg(feature = "non_crypto_hash")]
+use fxhash::FxHashMap as HashMap;
+#[cfg(not(feature = "non_crypto_hash"))]
 use std::collections::HashMap;
+
 use crate::data::tree_item::Character;
 use core::fmt::{Debug, Display};
 

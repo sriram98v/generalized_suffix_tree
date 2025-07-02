@@ -1,7 +1,12 @@
 use crate::suffix_node::node::*;
 use crate::suffix_node::Node;
 use super::node_iter::PostOrdNodes;
+
+#[cfg(feature = "non_crypto_hash")]
+use fxhash::FxHashMap as HashMap;
+#[cfg(not(feature = "non_crypto_hash"))]
 use std::collections::HashMap;
+
 use std::hash::Hash;
 use std::fmt::{Display, Debug};
 

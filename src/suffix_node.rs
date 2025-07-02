@@ -3,7 +3,11 @@ pub mod node;
 use crate::data::tree_item::Character;
 use crate::suffix_node::node::*;
 
+#[cfg(feature = "non_crypto_hash")]
+use fxhash::FxHashMap as HashMap;
+#[cfg(not(feature = "non_crypto_hash"))]
 use std::collections::HashMap;
+
 use std::marker::PhantomData;
 use std::fmt::{Display, Debug};
 use std::fmt;

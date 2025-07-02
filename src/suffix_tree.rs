@@ -8,7 +8,13 @@ use crate::data::TreeItem;
 use crate::data::tree_item::TreeItem as OtherTreeItem;
 use crate::iter::node_iter::*;
 use crate::iter::edge_iter::*;
-use std::collections::{HashMap, HashSet, LinkedList};
+
+#[cfg(feature = "non_crypto_hash")]
+use fxhash::{FxHashMap as HashMap, FxHashSet as HashSet};
+#[cfg(not(feature = "non_crypto_hash"))]
+use std::collections::{HashMap, HashSet};
+
+use std::collections::LinkedList;
 use std::fmt::{Display, Debug};
 use std::hash::Hash;
 use std::cmp;
@@ -72,36 +78,30 @@ where
     /// ```
     pub fn new(terminal_character: T)->Self{
         Self {
-            nodes: HashMap::from([(0, Node::new(
-                HashMap::new(),
+            nodes: [(0, Node::new(
+                [].into_iter().collect(),
                 None,
                 None,
                 0,
                 0
-            ))]),
+            ))].into_iter().collect(),
             root: 0,
             terminal_character,
-            strings: HashMap::new(),
+            strings: [].into_iter().collect(),
             leaves: Vec::new(),
-            suffix_links: HashMap::from([(0,0)]),
-            node_data: HashMap::from([(0, HashMap::new())]),
+            suffix_links: [(0,0)].into_iter().collect(),
+            node_data: [(0, [].into_iter().collect())].into_iter().collect(),
         }
     }
 
     /// Empties the tree of all strings and nodes.
     pub fn clear(&mut self){
         self.root = 0;
-        self.nodes = HashMap::from([(0, Node::new(
-            HashMap::new(),
-            None,
-            None,
-            0,
-            0
-        ))]);
-        self.strings = HashMap::new();
+        self.nodes = [].into_iter().collect();
+        self.strings = [].into_iter().collect();
         self.leaves = Vec::new();
-        self.node_data = HashMap::new();
-        self.suffix_links = HashMap::new();
+        self.node_data = [].into_iter().collect();
+        self.suffix_links = [].into_iter().collect();
     }
 
     fn leaves_of_node(&self, node_id:&NodeID, leaves:&mut Vec<NodeID>){
@@ -227,7 +227,7 @@ where
     pub fn substring_match(&self, s:&[T]) -> HashMap<U, HashSet<usize>>{
         let node = self.get_pattern_node(s);
         let mut leaves:Vec<usize> = vec![];
-        let mut ids_and_indexes: HashMap<StringID, HashSet<usize>> = HashMap::new();
+        let mut ids_and_indexes: HashMap<StringID, HashSet<usize>> = [].into_iter().collect();
         match node{
             None => {},
             Some(i) => {
@@ -353,9 +353,9 @@ where
                 match next_node{
                     None => {
                         let new_leaf_node_id: usize = self.create_node(
-                            HashMap::new(),
+                            [].into_iter().collect(),
                             Some(new_string_id),
-                            HashMap::from([(new_string_id, HashSet::from([start_idx]))]),
+                            [(new_string_id, [start_idx].into_iter().collect())].into_iter().collect(),
                             Some(active_node),
                             cmp::min(seq.len()-curr_pos,max_depth-self.get_node_depth(&active_node)),
                             curr_pos,
@@ -384,11 +384,11 @@ where
                         }
                         else{
                             let split_node_id: usize = self.create_node(
-                                HashMap::from([
-                                                (self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)].clone(), next_node_id)
-                                                ]),
+                                [
+                                            (self.get_node_string(&next_node_id)[self.get_node_start(&next_node_id) + curr_pos-start_idx-self.get_node_depth(&active_node)].clone(), next_node_id)
+                                            ].into_iter().collect(),
                                             Some(*self.get_node_string_id(&next_node_id)),
-                                            HashMap::from([(new_string_id, HashSet::from([start_idx]))]),
+                                            [(new_string_id, [start_idx].into_iter().collect())].into_iter().collect(),
                                             Some(active_node),
                                             curr_pos-start_idx-self.get_node_depth(&active_node),
                                             *self.get_node_start(&next_node_id),
@@ -398,9 +398,9 @@ where
                             self.set_node_start(&next_node_id, next_node_new_start);
                             self.set_node_parent_id(&next_node_id, &split_node_id);
                             let leaf_node_id: usize = self.create_node(
-                                HashMap::new(),
+                                [].into_iter().collect(),
                                 Some(new_string_id),
-                                HashMap::from([(new_string_id, HashSet::from([start_idx]))]),
+                                [(new_string_id, [start_idx].into_iter().collect())].into_iter().collect(),
                                 Some(split_node_id),
                                 cmp::min(seq.len()-curr_pos, max_depth-self.get_node_depth(&split_node_id)),
                                 curr_pos,

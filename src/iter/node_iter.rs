@@ -1,6 +1,11 @@
 use crate::suffix_node::node::*;
 use crate::suffix_node::Node;
+
+#[cfg(feature = "non_crypto_hash")]
+use fxhash::FxHashMap as HashMap;
+#[cfg(not(feature = "non_crypto_hash"))]
 use std::collections::HashMap;
+
 use std::hash::Hash;
 use crate::data::tree_item::Character;
 use core::fmt::{Debug, Display};
