@@ -1,73 +1,44 @@
-use crate::suffix_node::node::NodeID;
-use serde::{Serialize, Deserialize};
-use std::{cmp::Ordering, fmt};
 use core::fmt::{Debug, Display};
+use std::hash::Hash;
 
-#[derive(Debug, Hash, Eq, PartialEq, Clone, Serialize, Deserialize)]
-pub enum Character<T: PartialEq + Display + Debug + PartialOrd>{
-    Char(T),
-    Terminal
+pub trait Alphabet: Display + Debug + Hash + Eq + Default
+{
+    /// Checks if self is a terminal character
+    fn is_terminal(&self)->bool;
+
+    /// Returns a terminal character
+    fn terminal()->Self;
 }
 
-impl<T> Display for Character<T>
+pub trait SeqSet: Default
 where
-    T: PartialEq + Display + Debug + PartialOrd
+    Self::Character: Alphabet,
+    Self::SeqID: Display + Debug + Eq + Hash + Clone,
 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self{
-            Character::Char(t) => write!(f, "{}", t),
-            Character::Terminal => write!(f, ""),
-        }
-    }
-}
+    type Character;
+    type SeqID;
 
-impl<T> Character<T>
-where
-    T: PartialEq + Display + Debug + PartialOrd
-{
-    pub fn is_terminal(&self)->bool{
-        matches!(&self, Character::Terminal)
+    /// Creates a SeqSet from an iterator
+    fn from_iter(string_set_iter: impl ExactSizeIterator<Item = (Self::SeqID, Vec<Self::Character>)>) -> Self;
+
+    /// Creates a SeqSet from an object that can be turned into an iterator
+    fn from_set<T:ExactSizeIterator<Item = (Self::SeqID, Vec<Self::Character>)>>(string_set: impl Into<T>) -> Self
+    {
+        Self::from_iter(string_set.into())
     }
 
-    pub fn into_inner(&self)->Option<&T>{
-        match self {
-            Character::Char(x) => Some(x),
-            _ => None,
-        }
-    }
-}
+    /// Returns sequence slice by ID
+    fn get_seq(&self, id: &Self::SeqID)->&[Self::Character];
 
-impl<T> PartialOrd for Character<T>
-where
-    T: PartialEq + Display + Debug + PartialOrd
-{
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match self{
-            Character::Terminal => {
-                match other{
-                    Character::Terminal => Some(Ordering::Equal),
-                    _ => Some(Ordering::Less)
-                }
-            },
-            Character::Char(t) => {
-                match other{
-                    Character::Terminal => Some(Ordering::Greater),
-                    Character::Char(o) => t.partial_cmp(o)
-                }
-            }
-        }
-        // return None;
-    }
-}
+    /// Get concatenated sequence. The concatenated sequence is all the sequences present in SeqSet as a contiguous sequence of elements, separated by terminal characters.
+    fn get_contiguous_seq(&self)->&[Self::Character];
 
+    /// Returns start index of sequence by ID in contiguous
+    fn get_seq_start_idx(&self, id: &Self::SeqID)->usize;
 
-pub trait TreeItem<T, U>
-where
-    T: PartialEq + Display + Debug + PartialOrd
-{
-    fn new(k: U, v: Vec<T>)->Self;
-    fn get_string(&self) -> &[Character<T>];
-    fn get_id(&self) -> &U;
-    fn get_nodes(&self) -> impl ExactSizeIterator<Item= &NodeID>;
-    fn add_data_to_node(&mut self, node_id: &NodeID);
+    /// Returns the SeqID of string from index on contiguous segment
+    fn get_seq_id(&self, idx: usize)->&Self::SeqID;
+
+    /// Adds new sequence and seqID to set
+    fn add_seq(&mut self, id: Self::SeqID, seq: Vec<Self::Character>);
 }
